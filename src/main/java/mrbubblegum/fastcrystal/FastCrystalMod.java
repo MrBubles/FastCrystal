@@ -2,7 +2,6 @@ package mrbubblegum.fastcrystal;
 
 import mrbubblegum.fastcrystal.config.LoadConfig;
 import mrbubblegum.fastcrystal.config.SaveConfig;
-import mrbubblegum.fastcrystal.mixin.ClientPlayerInteractionManagerInterface;
 import mrbubblegum.fastcrystal.settings.BooleanSetting;
 import mrbubblegum.fastcrystal.settings.KeybindSetting;
 import mrbubblegum.fastcrystal.settings.Setting;
@@ -21,15 +20,11 @@ import net.minecraft.entity.mob.MagmaCubeEntity;
 import net.minecraft.entity.mob.SlimeEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
-import net.minecraft.network.packet.c2s.play.HandSwingC2SPacket;
-import net.minecraft.network.packet.c2s.play.PlayerInteractEntityC2SPacket;
 import net.minecraft.util.ActionResult;
-import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.*;
-import net.minecraft.world.GameMode;
 import net.minecraft.world.RaycastContext;
 
 import javax.swing.*;
@@ -85,27 +80,27 @@ public class FastCrystalMod implements ClientModInitializer {
         }
     }
 
-    public static void attack(Entity entity, boolean serverAttack) {
-        if (mc.getNetworkHandler() != null && mc.player != null && mc.interactionManager != null) {
-            if (serverAttack) {
-                ((ClientPlayerInteractionManagerInterface) mc.interactionManager).syncSelectedSlot();
-                mc.getNetworkHandler().sendPacket(PlayerInteractEntityC2SPacket.attack(entity, mc.player.isSneaking()));
-                mc.getNetworkHandler().sendPacket(new HandSwingC2SPacket(Hand.MAIN_HAND));
-            } else {
-                ((ClientPlayerInteractionManagerInterface) mc.interactionManager).syncSelectedSlot();
-                mc.getNetworkHandler().sendPacket(PlayerInteractEntityC2SPacket.attack(entity, mc.player.isSneaking()));
-                if (((ClientPlayerInteractionManagerInterface) mc.interactionManager).getGameMode() != GameMode.SPECTATOR) {
-                    mc.player.attack(entity);
-                    mc.player.resetLastAttackedTicks();
-                }
-            }
-            if (entity instanceof EndCrystalEntity | entity instanceof SlimeEntity | entity instanceof MagmaCubeEntity) {
-                entity.kill();
-                entity.remove(Entity.RemovalReason.KILLED);
-                entity.onRemoved();
-            }
-        }
-    }
+//    public static void attack(Entity entity, boolean serverAttack) {
+//        if (mc.getNetworkHandler() != null && mc.player != null && mc.interactionManager != null) {
+//            if (serverAttack) {
+//                ((ClientPlayerInteractionManagerInterface) mc.interactionManager).syncSelectedSlot();
+//                mc.getNetworkHandler().sendPacket(PlayerInteractEntityC2SPacket.attack(entity, mc.player.isSneaking()));
+//                mc.getNetworkHandler().sendPacket(new HandSwingC2SPacket(Hand.MAIN_HAND));
+//            } else {
+//                ((ClientPlayerInteractionManagerInterface) mc.interactionManager).syncSelectedSlot();
+//                mc.getNetworkHandler().sendPacket(PlayerInteractEntityC2SPacket.attack(entity, mc.player.isSneaking()));
+//                if (((ClientPlayerInteractionManagerInterface) mc.interactionManager).getGameMode() != GameMode.SPECTATOR) {
+//                    mc.player.attack(entity);
+//                    mc.player.resetLastAttackedTicks();
+//                }
+//            }
+//            if (entity instanceof EndCrystalEntity | entity instanceof SlimeEntity | entity instanceof MagmaCubeEntity) {
+//                entity.kill();
+//                entity.remove(Entity.RemovalReason.KILLED);
+//                entity.onRemoved();
+//            }
+//        }
+//    }
 
     public static BlockState getBlockState(BlockPos pos) {
         if (mc.world != null) {
