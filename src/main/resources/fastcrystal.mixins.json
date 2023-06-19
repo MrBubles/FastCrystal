@@ -1,0 +1,25 @@
+{
+  "required": true,
+  "package": "mrbubblegum.fastcrystal.mixin",
+  "compatibilityLevel": "JAVA_8",
+  "client": [
+    "ClientPlayerEntityMixin",
+    "ClientPlayerInteractionManagerInterface",
+    "ClientPlayerInteractionManagerMixin",
+    "ClientWorldMixin",
+    "EntityRendererMixin",
+    "ItemStackMixin",
+    "KeyboardMixin",
+    "MinecraftClientInterface",
+    "MinecraftClientMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "mixins": [
+    "ClientConnectionMixin",
+    "EndCrystalItemMixin",
+    "EntityMixin",
+    "LivingEntityInterface"
+  ]
+}
