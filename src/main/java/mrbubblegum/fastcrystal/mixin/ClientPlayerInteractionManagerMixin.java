@@ -50,6 +50,7 @@ public class ClientPlayerInteractionManagerMixin {
     private void onAttackEntity(PlayerEntity player, Entity target, CallbackInfo ci) {
         if (mc.world != null && mc.getNetworkHandler() != null && FastCrystalMod.fastCrystal.getValue() && FastCrystalMod.removeCrystal.getValue() && player.equals(mc.player) && isCrystal(target) && !target.isRemoved() && RenderUtil.isEntityRendered(target)) {
             FastCrystalMod.attack(target, true);
+//            syncSelectedSlot();
         }
     }
 }
