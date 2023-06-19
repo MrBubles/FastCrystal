@@ -1,0 +1,2 @@
+# FastCrystal
+crystal fast
