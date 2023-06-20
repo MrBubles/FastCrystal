@@ -15,8 +15,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import static mrbubblegum.fastcrystal.FastCrystalMod.mc;
-
 /**
  * @author ChiquitaV2
  */
@@ -26,13 +24,11 @@ public class LoadConfig {
     private static final String folderName = SaveConfig.folderName;
 
     public LoadConfig() {
-        mc.execute(() -> {
-            try {
-                loadAllSettings();
-            } catch (IOException ignored) {
+        try {
+            loadAllSettings();
+        } catch (IOException ignored) {
 
-            }
-        });
+        }
     }
 
     private static void loadAllSettings() throws IOException {

@@ -58,6 +58,7 @@ public class ClientPlayerInteractionManagerMixin {
 
     @Inject(at = @At("HEAD"), method = "attackEntity")
     private void onAttackEntity(PlayerEntity player, Entity entity, CallbackInfo ci) {
+        mc.execute(() -> {
             if (mc.world != null && mc.getNetworkHandler() != null && FastCrystalMod.fastCrystal.getValue() && FastCrystalMod.removeCrystal.getValue() && player.equals(mc.player) && isCrystal(entity) && !entity.isRemoved() && RenderUtil.isEntityRendered(entity)) {
                 syncSelectedSlot();
                 mc.getNetworkHandler().sendPacket(PlayerInteractEntityC2SPacket.attack(entity, mc.player.isSneaking()));
@@ -65,6 +66,7 @@ public class ClientPlayerInteractionManagerMixin {
                 entity.kill();
                 entity.remove(Entity.RemovalReason.KILLED);
                 entity.onRemoved();
-        }
+            }
+        });
     }
 }

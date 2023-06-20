@@ -19,6 +19,8 @@ import org.spongepowered.asm.mixin.Overwrite;
 
 import java.util.List;
 
+import static mrbubblegum.fastcrystal.FastCrystalMod.mc;
+
 @Mixin({EndCrystalItem.class})
 public class EndCrystalItemMixin {
 
@@ -64,7 +66,7 @@ public class EndCrystalItemMixin {
     }
 
     public void decrement(ItemUsageContext context) {
-//        mc.execute(() -> {
+        mc.execute(() -> {
             while (!context.getStack().isEmpty() && FastCrystalMod.isLookingAtOrCloseToCrystal(context.getBlockPos(), context.getWorld()))
                 context.getStack().decrement(1);
 //    }
@@ -119,6 +121,6 @@ public class EndCrystalItemMixin {
 //            return list.isEmpty();
 //        }
 //        return false;
-//        });
+        });
     }
 }

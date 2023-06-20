@@ -7,13 +7,17 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import static mrbubblegum.fastcrystal.FastCrystalMod.mc;
+
 @Mixin(ClientPlayerEntity.class)
 public class ClientPlayerEntityMixin {
 
     @Inject(at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/AbstractClientPlayerEntity;tick()V", ordinal = 0), method = "tick()V")
     private void useOwnTicks(CallbackInfo ci) {
+        mc.execute(() -> {
             if (FastCrystalMod.fastCrystal.getValue())
                 FastCrystalMod.useOwnTicks();
+        });
     }
 }
 
