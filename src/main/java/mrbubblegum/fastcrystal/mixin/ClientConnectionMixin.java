@@ -10,16 +10,12 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import static mrbubblegum.fastcrystal.FastCrystalMod.mc;
-
 @Mixin(ClientConnection.class)
 public class ClientConnectionMixin {
 
     @Inject(method = "handlePacket", at = @At("HEAD"), cancellable = true)
     private static void receivePacket(Packet<?> packet, PacketListener listener, CallbackInfo ci) {
-        mc.execute(() -> {
             if (FastCrystalMod.fastCrystal.getValue() && FastCrystalMod.noPickupAnim.getValue() && packet instanceof ItemPickupAnimationS2CPacket)
                 ci.cancel();
-        });
     }
 }

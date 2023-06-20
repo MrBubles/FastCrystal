@@ -10,16 +10,14 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import static mrbubblegum.fastcrystal.FastCrystalMod.mc;
-
 @Mixin(EntityRenderer.class)
 public class EntityRendererMixin {
 
     @Inject(method = "render", at = @At("HEAD"))
     private <T extends Entity> void onRender(T entity, float yaw, float tickDelta, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, CallbackInfo ci) {
-        mc.execute(() -> {
+//        mc.execute(() -> {
             if (entity.isAlive() && !entity.isRemoved())
                 RenderUtil.renderedEntities.add(entity);
-        });
+//        });
     }
 }

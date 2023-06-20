@@ -11,6 +11,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
+import static mrbubblegum.fastcrystal.FastCrystalMod.mc;
+
 /**
  * @author ChiquitaV2
  */
@@ -20,14 +22,16 @@ public class SaveConfig {
     private static Stopwatch saveTimer;
 
     public SaveConfig() {
-        try {
-            saveConfig();
-            saveAllSettings();
-            saveTimer = new Stopwatch();
-            timedSave();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        mc.execute(() -> {
+            try {
+                saveConfig();
+                saveAllSettings();
+                saveTimer = new Stopwatch();
+                timedSave();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
     }
 
     private static void saveConfig() throws IOException {

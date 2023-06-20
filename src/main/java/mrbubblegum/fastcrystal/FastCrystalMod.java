@@ -260,7 +260,7 @@ public class FastCrystalMod implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         mc = MinecraftClient.getInstance();
-        mc.execute(() -> {
+//        mc.execute(() -> {
             if (isModLoaded("walksycrystaloptimizer", "Walksy Optimizer"))
                 displayMessage("WalksyCrystalOptimizer is not needed for FastCrystal, please disable it", "Warning!");
             if (isModLoaded("marlows-crystal-optimizer", "Marlow's Crystal Optimizer"))
@@ -274,6 +274,6 @@ public class FastCrystalMod implements ClientModInitializer {
 
             if (!openedGui.getValue())
                 displayMessage("The fastcrystal gui bind is " + guiBind.getStringValue(), "");
-        });
+//        });
     }
 }

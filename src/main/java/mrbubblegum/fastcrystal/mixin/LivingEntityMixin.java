@@ -15,10 +15,10 @@ public class LivingEntityMixin {
 
     @Inject(at = @At("RETURN"), method = "getHandSwingDuration", cancellable = true)
     private void swingHandDuration(CallbackInfoReturnable<Integer> cir) {
-        mc.execute(() -> {
+//        mc.execute(() -> {
             if (FastCrystalMod.fastCrystal.getValue() && FastCrystalMod.slowSwing.getValue() && mc.player != null && mc.player.isHolding(Items.END_CRYSTAL))
                 cir.setReturnValue(12);
 //                cir.setReturnValue(5);
-        });
+//        });
     }
 }
