@@ -15,14 +15,16 @@ public class EntityMixin {
 
     @Inject(at = @At("HEAD"), method = "tick")
     private void onTick(CallbackInfo ci) {
-        if (mc.world == null | mc.player == null | !FastCrystalMod.fastCrystal.getValue()) {
-            return;
-        }
+        mc.execute(() -> {
+            if (mc.world == null | mc.player == null | !FastCrystalMod.fastCrystal.getValue()) {
+                return;
+            }
 
-        if (FastCrystalMod.fastAttack.getValue() && mc.player.getMainHandStack().getItem() instanceof EndCrystalItem crystalItem) {
-            mc.player.getItemCooldownManager().set(crystalItem, 0);
-            ((LivingEntityInterface) mc.player).setLastAttackedTicks(69);
-            ((MinecraftClientInterface) mc).setAttackCooldown(0);
-        }
+            if (FastCrystalMod.fastAttack.getValue() && mc.player.getMainHandStack().getItem() instanceof EndCrystalItem crystalItem) {
+                mc.player.getItemCooldownManager().set(crystalItem, 0);
+                ((LivingEntityInterface) mc.player).setLastAttackedTicks(69);
+                ((MinecraftClientInterface) mc).setAttackCooldown(0);
+            }
+        });
     }
 }

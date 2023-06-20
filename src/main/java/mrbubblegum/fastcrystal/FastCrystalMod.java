@@ -5,6 +5,7 @@ import mrbubblegum.fastcrystal.config.SaveConfig;
 import mrbubblegum.fastcrystal.settings.BooleanSetting;
 import mrbubblegum.fastcrystal.settings.KeybindSetting;
 import mrbubblegum.fastcrystal.settings.Setting;
+import mrbubblegum.fastcrystal.utils.RenderUtil;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
@@ -26,6 +27,7 @@ import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.*;
 import net.minecraft.world.RaycastContext;
+import net.minecraft.world.World;
 
 import javax.swing.*;
 import java.awt.*;
@@ -40,66 +42,78 @@ public class FastCrystalMod implements ClientModInitializer {
     public static final BooleanSetting fastUse = new BooleanSetting("FastUse", true);
     public static final BooleanSetting fastAttack = new BooleanSetting("FastAttack", true);
     public static final BooleanSetting noPickupAnim = new BooleanSetting("NoPickupAnim", false);
+    public static final BooleanSetting slowSwing = new BooleanSetting("SlowSwing", false);
     public static final BooleanSetting openedGui = new BooleanSetting("OpenedGui", false, true);
-    public static final List<Setting<?>> SETTINGS = Arrays.asList(fastCrystal, guiBind, removeCrystal, fastUse, fastAttack, /*moreCps,*/ noPickupAnim, openedGui);
+    public static final List<Setting<?>> SETTINGS = Arrays.asList(fastCrystal, guiBind, removeCrystal, fastUse, fastAttack, /*moreCps,*/ noPickupAnim, slowSwing, openedGui);
     public static MinecraftClient mc;
     public static int hitCount;
     public static int breakingBlockTick;
 
     public static void useOwnTicks() {
-        if (mc.world == null | mc.player == null | mc.interactionManager == null) {
-            return;
-        }
+        mc.execute(() -> {
+            if (mc.world == null | mc.player == null | mc.interactionManager == null) {
+                return;
+            }
 
-        ItemStack mainHandStack = mc.player.getMainHandStack();
+            ItemStack mainHandStack = mc.player.getMainHandStack();
 
-        if (mc.interactionManager.isBreakingBlock() && isLookingAt(Blocks.OBSIDIAN, Objects.requireNonNull(lookedAtBlock()).getBlockPos()) | isLookingAt(Blocks.BEDROCK, Objects.requireNonNull(lookedAtBlock()).getBlockPos())) {
-            breakingBlockTick++;
-        } else breakingBlockTick = 0;
+            if (mc.interactionManager.isBreakingBlock() && isLookingAt(Blocks.OBSIDIAN, Objects.requireNonNull(lookedAtBlockResult()).getBlockPos()) | isLookingAt(Blocks.BEDROCK, Objects.requireNonNull(lookedAtBlockResult()).getBlockPos())) {
+                breakingBlockTick++;
+            } else breakingBlockTick = 0;
 
-        if (breakingBlockTick > 5)
-            return;
+            if (breakingBlockTick > 5)
+                return;
 
-        if (!mc.options.useKey.isPressed())
-            hitCount = 0;
+            if (!mc.options.useKey.isPressed())
+                hitCount = 0;
 
-        if (hitCount == limitPackets())
-            return;
+            if (hitCount == limitPackets())
+                return;
 
-        if (lookingAtCrystal()) {
-            if (mc.options.attackKey.isPressed())
-                hitCount++;
-        }
-        if (!mainHandStack.isOf(Items.END_CRYSTAL)) {
-            return;
-        }
-        if (mc.options.useKey.isPressed() && (isLookingAt(Blocks.OBSIDIAN, Objects.requireNonNull(lookedAtBlock()).getBlockPos()) | isLookingAt(Blocks.BEDROCK, Objects.requireNonNull(lookedAtBlock()).getBlockPos()))) {
-            ActionResult result = sendInteractBlockPacket(Objects.requireNonNull(lookedAtBlock()).getBlockPos(), Objects.requireNonNull(lookedAtBlock()).getSide());
-            if (canPlaceCrystalServer(Objects.requireNonNull(lookedAtBlock()).getBlockPos()) && result.isAccepted() && result.shouldSwingHand())
-                mc.player.swingHand(mc.player.getActiveHand());
-        }
+            if (lookingAtCrystal()) {
+                if (mc.options.attackKey.isPressed())
+                    hitCount++;
+            }
+            if (!mainHandStack.isOf(Items.END_CRYSTAL)) {
+                return;
+            }
+            if (mc.options.useKey.isPressed() && (isLookingAt(Blocks.OBSIDIAN, Objects.requireNonNull(lookedAtBlockResult()).getBlockPos()) | isLookingAt(Blocks.BEDROCK, Objects.requireNonNull(lookedAtBlockResult()).getBlockPos()))) {
+                ActionResult result = sendInteractBlockPacket(Objects.requireNonNull(lookedAtBlockResult()).getBlockPos(), Objects.requireNonNull(lookedAtBlockResult()).getSide());
+                if (canPlaceCrystalServer(Objects.requireNonNull(lookedAtBlockResult()).getBlockPos()) && result.isAccepted() && result.shouldSwingHand())
+                    mc.player.swingHand(mc.player.getActiveHand());
+            }
+        });
+    }
+
+    public static boolean isLookingAtOrCloseToCrystal(BlockPos blockPos, World world) {
+        List<EndCrystalEntity> list = world.getEntitiesByClass(EndCrystalEntity.class, new Box(blockPos.up()), e -> !e.isRemoved() && RenderUtil.isEntityRendered(e));
+        if (mc.crosshairTarget instanceof EntityHitResult result && result.getEntity() instanceof EndCrystalEntity crystal && !crystal.isRemoved() && RenderUtil.isEntityRendered(crystal)) {
+            return true;
+        } else return !list.isEmpty();
     }
 
 //    public static void attack(Entity entity, boolean serverAttack) {
-//        if (mc.getNetworkHandler() != null && mc.player != null && mc.interactionManager != null) {
-//            if (serverAttack) {
-//                ((ClientPlayerInteractionManagerInterface) mc.interactionManager).syncSelectedSlot();
-//                mc.getNetworkHandler().sendPacket(PlayerInteractEntityC2SPacket.attack(entity, mc.player.isSneaking()));
-//                mc.getNetworkHandler().sendPacket(new HandSwingC2SPacket(Hand.MAIN_HAND));
-//            } else {
-//                ((ClientPlayerInteractionManagerInterface) mc.interactionManager).syncSelectedSlot();
-//                mc.getNetworkHandler().sendPacket(PlayerInteractEntityC2SPacket.attack(entity, mc.player.isSneaking()));
-//                if (((ClientPlayerInteractionManagerInterface) mc.interactionManager).getGameMode() != GameMode.SPECTATOR) {
-//                    mc.player.attack(entity);
-//                    mc.player.resetLastAttackedTicks();
+//        mc.execute(() -> {
+//            if (mc.getNetworkHandler() != null && mc.player != null && mc.interactionManager != null) {
+//                if (serverAttack) {
+//                    ((ClientPlayerInteractionManagerInterface) mc.interactionManager).syncSelectedSlot();
+//                    mc.getNetworkHandler().sendPacket(PlayerInteractEntityC2SPacket.attack(entity, mc.player.isSneaking()));
+//                    mc.getNetworkHandler().sendPacket(new HandSwingC2SPacket(Hand.MAIN_HAND));
+//                } else {
+//                    ((ClientPlayerInteractionManagerInterface) mc.interactionManager).syncSelectedSlot();
+//                    mc.getNetworkHandler().sendPacket(PlayerInteractEntityC2SPacket.attack(entity, mc.player.isSneaking()));
+//                    if (((ClientPlayerInteractionManagerInterface) mc.interactionManager).getGameMode() != GameMode.SPECTATOR) {
+//                        mc.player.attack(entity);
+//                        mc.player.resetLastAttackedTicks();
+//                    }
+//                }
+//                if (entity instanceof EndCrystalEntity | entity instanceof SlimeEntity | entity instanceof MagmaCubeEntity) {
+//                    entity.kill();
+//                    entity.remove(Entity.RemovalReason.KILLED);
+//                    entity.onRemoved();
 //                }
 //            }
-//            if (entity instanceof EndCrystalEntity | entity instanceof SlimeEntity | entity instanceof MagmaCubeEntity) {
-//                entity.kill();
-//                entity.remove(Entity.RemovalReason.KILLED);
-//                entity.onRemoved();
-//            }
-//        }
+//        });
 //    }
 
     public static BlockState getBlockState(BlockPos pos) {
@@ -113,7 +127,7 @@ public class FastCrystalMod implements ClientModInitializer {
         return Objects.requireNonNull(getBlockState(pos)).getBlock() == block;
     }
 
-    private static BlockHitResult lookedAtBlock() {
+    public static BlockHitResult lookedAtBlockResult() {
         if (mc.world != null && mc.player != null) {
             Vec3d camPos = mc.player.getEyePos();
             Vec3d clientLookVec = lookVec();
@@ -187,9 +201,21 @@ public class FastCrystalMod implements ClientModInitializer {
         return false;
     }
 
-    public static Block currentBlock() {
-        if (mc.world != null && mc.player != null && mc.crosshairTarget instanceof BlockHitResult hit) {
+    public static BlockPos lookedAtBlockPos() {
+        BlockHitResult hit = lookedAtBlockResult();
+        if (mc.world != null && mc.player != null && hit != null) {
             Block block = mc.world.getBlockState(hit.getBlockPos()).getBlock();
+            if (block != Blocks.AIR) {
+                return hit.getBlockPos();
+            }
+        }
+        return null;
+    }
+
+    public static Block lookedAtBlock() {
+        BlockPos pos = lookedAtBlockPos();
+        if (mc.world != null && mc.player != null && pos != null) {
+            Block block = mc.world.getBlockState(pos).getBlock();
             if (block != Blocks.AIR) {
                 return block;
             }
@@ -198,24 +224,26 @@ public class FastCrystalMod implements ClientModInitializer {
     }
 
     public static void displayMessage(String message, String title) {
-        try {
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        } catch (Exception ignored) {
-        }
+        mc.execute(() -> {
+            try {
+                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+            } catch (Exception ignored) {
+            }
 
-        JFrame frame = new JFrame();
-        frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-        frame.setLocationRelativeTo(null);
-        frame.setAlwaysOnTop(true);
+            JFrame frame = new JFrame();
+            frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+            frame.setLocationRelativeTo(null);
+            frame.setAlwaysOnTop(true);
 
-        JPanel panel = new JPanel(new BorderLayout(10, 10));
-        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+            JPanel panel = new JPanel(new BorderLayout(10, 10));
+            panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        JLabel messageLabel = new JLabel(message);
-        panel.add(messageLabel, BorderLayout.CENTER);
+            JLabel messageLabel = new JLabel(message);
+            panel.add(messageLabel, BorderLayout.CENTER);
 
-        JOptionPane.showMessageDialog(frame, panel, title, JOptionPane.PLAIN_MESSAGE);
-        frame.dispose();
+            JOptionPane.showMessageDialog(frame, panel, title, JOptionPane.PLAIN_MESSAGE);
+            frame.dispose();
+        });
     }
 
     public boolean isModLoaded(String modId, String modName) {
@@ -233,19 +261,21 @@ public class FastCrystalMod implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
-        if (isModLoaded("walksycrystaloptimizer", "Walksy Optimizer"))
-            displayMessage("WalksyCrystalOptimizer is not needed for FastCrystal, please disable it", "Warning!");
-        if (isModLoaded("marlows-crystal-optimizer", "Marlow's Crystal Optimizer"))
-            displayMessage("MarlowCrystalOptimizer is not needed for FastCrystal, please disable it", "Warning!");
-        if (isModLoaded("crystaloptimizer", "CrystalOptimizer"))
-            displayMessage("CrystalOptimizer is not needed for FastCrystal, please disable it", "Warning!");
-
         mc = MinecraftClient.getInstance();
-        new LoadConfig();
-        new SaveConfig();
-        Runtime.getRuntime().addShutdownHook(new Thread(SaveConfig::saveAllSettings));
+        mc.execute(() -> {
+            if (isModLoaded("walksycrystaloptimizer", "Walksy Optimizer"))
+                displayMessage("WalksyCrystalOptimizer is not needed for FastCrystal, please disable it", "Warning!");
+            if (isModLoaded("marlows-crystal-optimizer", "Marlow's Crystal Optimizer"))
+                displayMessage("MarlowCrystalOptimizer is not needed for FastCrystal, please disable it", "Warning!");
+            if (isModLoaded("crystaloptimizer", "CrystalOptimizer"))
+                displayMessage("CrystalOptimizer is not needed for FastCrystal, please disable it", "Warning!");
 
-        if (!openedGui.getValue())
-            displayMessage("The fastcrystal gui bind is " + guiBind.getStringValue(), "");
+            new LoadConfig();
+            new SaveConfig();
+            Runtime.getRuntime().addShutdownHook(new Thread(SaveConfig::saveAllSettings));
+
+            if (!openedGui.getValue())
+                displayMessage("The fastcrystal gui bind is " + guiBind.getStringValue(), "");
+        });
     }
 }
