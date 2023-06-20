@@ -24,24 +24,20 @@ public class MinecraftClientMixin {
 
     @Inject(at = @At("HEAD"), method = "doItemUse", cancellable = true)
     private void onDoItemUse(CallbackInfo ci) {
-        mc.execute(() -> {
-            if (FastCrystalMod.fastCrystal.getValue() && mc.player != null) {
-                ItemStack mainHand = mc.player.getMainHandStack();
-                if (mainHand.isOf(Items.END_CRYSTAL))
-                    if (FastCrystalMod.hitCount != limitPackets())
-                        ci.cancel();
-            }
-        });
+        if (FastCrystalMod.fastCrystal.getValue() && mc.player != null) {
+            ItemStack mainHand = mc.player.getMainHandStack();
+            if (mainHand.isOf(Items.END_CRYSTAL))
+                if (FastCrystalMod.hitCount != limitPackets())
+                    ci.cancel();
+        }
     }
 
     @Inject(method = "tick", at = @At("HEAD"))
     private void tick(CallbackInfo info) {
-        mc.execute(() -> {
-            if (mc == null || mc.player == null | mc.world == null)
-                return;
+        if (mc == null || mc.player == null | mc.world == null)
+            return;
 
-            if (FastCrystalMod.fastCrystal.getValue() && FastCrystalMod.fastUse.getValue() && mc.player.isHolding(Items.END_CRYSTAL) && Objects.equals(FastCrystalMod.lookedAtBlockPos(), Blocks.OBSIDIAN) | Objects.equals(FastCrystalMod.lookedAtBlockPos(), Blocks.BEDROCK))
-                itemUseCooldown = 0;
-        });
+        if (FastCrystalMod.fastCrystal.getValue() && FastCrystalMod.fastUse.getValue() && mc.player.isHolding(Items.END_CRYSTAL) && Objects.equals(FastCrystalMod.currentBlock(), Blocks.OBSIDIAN) | Objects.equals(FastCrystalMod.currentBlock(), Blocks.BEDROCK))
+            itemUseCooldown = 0;
     }
 }

@@ -16,11 +16,9 @@ public class KeyboardMixin {
 
     @Inject(at = @At("HEAD"), method = "onKey(JIIII)V")
     private void onKey(long windowHandle, int keyCode, int scanCode, int action, int modifiers, CallbackInfo ci) {
-        mc.execute(() -> {
-            if (mc.world != null && mc.player != null && mc.currentScreen == null && windowHandle == mc.getWindow().getHandle() && action == GLFW.GLFW_PRESS && keyCode == FastCrystalMod.guiBind.getValue()) {
-                mc.setScreen(new FastCrystalScreen());
-                FastCrystalMod.openedGui.setValue(true);
-            }
-        });
+        if (mc.world != null && mc.player != null && windowHandle == mc.getWindow().getHandle() && action == GLFW.GLFW_PRESS && keyCode == FastCrystalMod.guiBind.getValue()) {
+            mc.setScreen(new FastCrystalScreen());
+            FastCrystalMod.openedGui.setValue(true);
+        }
     }
 }

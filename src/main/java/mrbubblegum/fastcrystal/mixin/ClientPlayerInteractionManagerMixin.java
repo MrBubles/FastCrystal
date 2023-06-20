@@ -49,24 +49,17 @@ public class ClientPlayerInteractionManagerMixin {
         return entity instanceof EndCrystalEntity | entity instanceof MagmaCubeEntity | entity instanceof SlimeEntity;
     }
 
-//    public EndCrystalEntity getLookedAtOrClosestToCrystal(BlockPos blockPos, World world) {
-//        EndCrystalEntity crystal2 = world.getEntitiesByClass(EndCrystalEntity.class, new Box(blockPos.up()), e -> !e.isRemoved() && RenderUtil.isEntityRendered(e)).get(0);
-//        if (mc.crosshairTarget instanceof EntityHitResult result && result.getEntity() instanceof EndCrystalEntity crystal && !crystal.isRemoved() && RenderUtil.isEntityRendered(crystal)) {
-//            return crystal;
-//        } else return crystal2;
-//    }
-
     @Inject(at = @At("HEAD"), method = "attackEntity")
     private void onAttackEntity(PlayerEntity player, Entity entity, CallbackInfo ci) {
-        mc.execute(() -> {
-            if (mc.world != null && mc.getNetworkHandler() != null && FastCrystalMod.fastCrystal.getValue() && FastCrystalMod.removeCrystal.getValue() && player.equals(mc.player) && isCrystal(entity) && !entity.isRemoved() && RenderUtil.isEntityRendered(entity)) {
-                syncSelectedSlot();
-                mc.getNetworkHandler().sendPacket(PlayerInteractEntityC2SPacket.attack(entity, mc.player.isSneaking()));
-                mc.getNetworkHandler().sendPacket(new HandSwingC2SPacket(Hand.MAIN_HAND));
+        if (mc.world != null && mc.getNetworkHandler() != null && FastCrystalMod.fastCrystal.getValue() && FastCrystalMod.removeCrystal.getValue() && player.equals(mc.player) && isCrystal(entity) && !entity.isRemoved() && RenderUtil.isEntityRendered(entity)) {
+            syncSelectedSlot();
+            mc.getNetworkHandler().sendPacket(PlayerInteractEntityC2SPacket.attack(entity, mc.player.isSneaking()));
+            mc.getNetworkHandler().sendPacket(new HandSwingC2SPacket(Hand.MAIN_HAND));
+            if (entity instanceof EndCrystalEntity | entity instanceof SlimeEntity | entity instanceof MagmaCubeEntity) {
                 entity.kill();
                 entity.remove(Entity.RemovalReason.KILLED);
                 entity.onRemoved();
             }
-        });
+        }
     }
 }
