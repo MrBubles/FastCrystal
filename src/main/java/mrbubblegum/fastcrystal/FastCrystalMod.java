@@ -50,37 +50,39 @@ public class FastCrystalMod implements ClientModInitializer {
     public static int breakingBlockTick;
 
     public static void useOwnTicks() {
-        if (mc.world == null | mc.player == null | mc.interactionManager == null) {
-            return;
-        }
+        mc.execute(() -> {
+            if (mc.world == null | mc.player == null | mc.interactionManager == null) {
+                return;
+            }
 
-        ItemStack mainHandStack = mc.player.getMainHandStack();
+            ItemStack mainHandStack = mc.player.getMainHandStack();
 
-        if (mc.interactionManager.isBreakingBlock() && isLookingAt(Blocks.OBSIDIAN, Objects.requireNonNull(lookedAtBlockResult()).getBlockPos()) | isLookingAt(Blocks.BEDROCK, Objects.requireNonNull(lookedAtBlockResult()).getBlockPos())) {
-            breakingBlockTick++;
-        } else breakingBlockTick = 0;
+            if (mc.interactionManager.isBreakingBlock() && isLookingAt(Blocks.OBSIDIAN, Objects.requireNonNull(lookedAtBlockResult()).getBlockPos()) | isLookingAt(Blocks.BEDROCK, Objects.requireNonNull(lookedAtBlockResult()).getBlockPos())) {
+                breakingBlockTick++;
+            } else breakingBlockTick = 0;
 
-        if (breakingBlockTick > 5)
-            return;
+            if (breakingBlockTick > 5)
+                return;
 
-        if (!mc.options.useKey.isPressed())
-            hitCount = 0;
+            if (!mc.options.useKey.isPressed())
+                hitCount = 0;
 
-        if (hitCount == limitPackets())
-            return;
+            if (hitCount == limitPackets())
+                return;
 
-        if (lookingAtCrystal()) {
-            if (mc.options.attackKey.isPressed())
-                hitCount++;
-        }
-        if (!mainHandStack.isOf(Items.END_CRYSTAL)) {
-            return;
-        }
-        if (mc.options.useKey.isPressed() && (isLookingAt(Blocks.OBSIDIAN, Objects.requireNonNull(lookedAtBlockResult()).getBlockPos()) | isLookingAt(Blocks.BEDROCK, Objects.requireNonNull(lookedAtBlockResult()).getBlockPos()))) {
-            ActionResult result = sendInteractBlockPacket(Objects.requireNonNull(lookedAtBlockResult()).getBlockPos(), Objects.requireNonNull(lookedAtBlockResult()).getSide());
-            if (canPlaceCrystalServer(Objects.requireNonNull(lookedAtBlockResult()).getBlockPos()) && result.isAccepted() && result.shouldSwingHand())
-                mc.player.swingHand(mc.player.getActiveHand());
-        }
+            if (lookingAtCrystal()) {
+                if (mc.options.attackKey.isPressed())
+                    hitCount++;
+            }
+            if (!mainHandStack.isOf(Items.END_CRYSTAL)) {
+                return;
+            }
+            if (mc.options.useKey.isPressed() && (isLookingAt(Blocks.OBSIDIAN, Objects.requireNonNull(lookedAtBlockResult()).getBlockPos()) | isLookingAt(Blocks.BEDROCK, Objects.requireNonNull(lookedAtBlockResult()).getBlockPos()))) {
+                ActionResult result = sendInteractBlockPacket(Objects.requireNonNull(lookedAtBlockResult()).getBlockPos(), Objects.requireNonNull(lookedAtBlockResult()).getSide());
+                if (canPlaceCrystalServer(Objects.requireNonNull(lookedAtBlockResult()).getBlockPos()) && result.isAccepted() && result.shouldSwingHand())
+                    mc.player.swingHand(mc.player.getActiveHand());
+            }
+        });
     }
 
     public static boolean isLookingAtOrCloseToCrystal(BlockPos blockPos, World world) {

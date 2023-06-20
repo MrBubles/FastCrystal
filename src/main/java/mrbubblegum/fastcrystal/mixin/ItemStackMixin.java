@@ -13,10 +13,10 @@ import static mrbubblegum.fastcrystal.FastCrystalMod.mc;
 public class ItemStackMixin {
 
     @Inject(method = "getBobbingAnimationTime", at = @At("HEAD"), cancellable = true)
-    private void stopBobbingAnimation(CallbackInfoReturnable<Integer> cir) {
+    private void stopBobbingAnimation(CallbackInfoReturnable<Integer> info) {
         mc.execute(() -> {
             if (FastCrystalMod.fastCrystal.getValue())
-                cir.setReturnValue(0);
+                info.setReturnValue(0);
         });
     }
 }
