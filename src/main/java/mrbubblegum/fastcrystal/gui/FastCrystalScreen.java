@@ -14,6 +14,8 @@ import net.minecraft.text.Text;
 import java.util.ArrayList;
 import java.util.List;
 
+import static mrbubblegum.fastcrystal.FastCrystalMod.mc;
+
 public class FastCrystalScreen extends Screen {
 
     private final List<FastCrystalGuiObj> objs = new ArrayList<>();
@@ -30,28 +32,32 @@ public class FastCrystalScreen extends Screen {
 
     @Override
     public void init() {
-        int settingCount = 0;
-        for (Setting setting : FastCrystalMod.SETTINGS) {
-            settingCount++;
-            if (!setting.isHidden()) {
-                if (setting instanceof BooleanSetting) {
-                    objs.add(new Switch((BooleanSetting) setting, 80, 50 + (settingCount << 4), 12));
+        mc.execute(() -> {
+            int settingCount = 0;
+            for (Setting setting : FastCrystalMod.SETTINGS) {
+                settingCount++;
+                if (!setting.isHidden()) {
+                    if (setting instanceof BooleanSetting) {
+                        objs.add(new Switch((BooleanSetting) setting, 80, 50 + (settingCount << 4), 12));
 //            } else if (setting instanceof FloatSetting) {
 //                objs.add(new Slider((FloatSetting) setting, 80, 50 + (settingCount << 4), 80, 12));
 //            } else if (setting instanceof IntegerSetting) {
 //                objs.add(new IntSlider((IntegerSetting) setting, 80, 50 + (settingCount << 4), 80, 12));
-                } else if (setting instanceof KeybindSetting) {
-                    objs.add(new KeybindBox((KeybindSetting) setting, 80, 50 + (settingCount << 4), 70, 12));
+                    } else if (setting instanceof KeybindSetting) {
+                        objs.add(new KeybindBox((KeybindSetting) setting, 80, 50 + (settingCount << 4), 70, 12));
+                    }
                 }
             }
-        }
+        });
     }
 
     @Override
     public void render(MatrixStack matrices, int mouseX, int mouseY, float partialTicks) {
-        renderBackground(matrices);
-        for (FastCrystalGuiObj obj : objs)
-            obj.render(matrices, mouseX, mouseY);
+        mc.execute(() -> {
+            renderBackground(matrices);
+            for (FastCrystalGuiObj obj : objs)
+                obj.render(matrices, mouseX, mouseY);
+        });
     }
 
     @Override

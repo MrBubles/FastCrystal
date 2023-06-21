@@ -15,7 +15,9 @@ public class ClientWorldMixin {
 
     @Inject(method = {"removeEntity"}, at = {@At("HEAD")})
     private void removeEntity(int entityId, Entity.RemovalReason removalReason, CallbackInfo ci) {
-        if (mc.world != null)
-            RenderUtil.renderedEntities.remove(mc.world.getEntityById(entityId));
+        mc.execute(() -> {
+            if (mc.world != null)
+                RenderUtil.renderedEntities.remove(mc.world.getEntityById(entityId));
+        });
     }
 }

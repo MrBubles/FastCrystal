@@ -5,6 +5,7 @@ import mrbubblegum.fastcrystal.config.SaveConfig;
 import mrbubblegum.fastcrystal.settings.BooleanSetting;
 import mrbubblegum.fastcrystal.settings.KeybindSetting;
 import mrbubblegum.fastcrystal.settings.Setting;
+import mrbubblegum.fastcrystal.utils.RenderUtil;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
@@ -15,6 +16,7 @@ import net.minecraft.block.Blocks;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.PlayerListEntry;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityType;
 import net.minecraft.entity.decoration.EndCrystalEntity;
 import net.minecraft.entity.mob.MagmaCubeEntity;
 import net.minecraft.entity.mob.SlimeEntity;
@@ -26,6 +28,7 @@ import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.*;
 import net.minecraft.world.RaycastContext;
+import net.minecraft.world.World;
 
 import javax.swing.*;
 import java.awt.*;
@@ -34,14 +37,17 @@ import java.util.List;
 import java.util.Objects;
 
 public class FastCrystalMod implements ClientModInitializer {
+
     public static final BooleanSetting fastCrystal = new BooleanSetting("FastCrystal", true);
     public static final KeybindSetting guiBind = new KeybindSetting("UiBind", "backslash");
     public static final BooleanSetting removeCrystal = new BooleanSetting("RemoveCrystal", true);
     public static final BooleanSetting fastUse = new BooleanSetting("FastUse", true);
     public static final BooleanSetting fastAttack = new BooleanSetting("FastAttack", true);
     public static final BooleanSetting noPickupAnim = new BooleanSetting("NoPickupAnim", false);
+    public static final BooleanSetting fastSwing = new BooleanSetting("FastSwing", false);
     public static final BooleanSetting openedGui = new BooleanSetting("OpenedGui", false, true);
     public static final List<Setting<?>> SETTINGS = Arrays.asList(fastCrystal, guiBind, removeCrystal, fastUse, fastAttack, /*moreCps,*/ noPickupAnim, openedGui);
+    public static FastCrystalMod INSTANCE = new FastCrystalMod();
     public static MinecraftClient mc;
     public static int hitCount;
     public static int breakingBlockTick;
@@ -53,7 +59,7 @@ public class FastCrystalMod implements ClientModInitializer {
 
         ItemStack mainHandStack = mc.player.getMainHandStack();
 
-        if (mc.interactionManager.isBreakingBlock() && isLookingAt(Blocks.OBSIDIAN, Objects.requireNonNull(lookedAtBlock()).getBlockPos()) | isLookingAt(Blocks.BEDROCK, Objects.requireNonNull(lookedAtBlock()).getBlockPos())) {
+        if (mc.interactionManager.isBreakingBlock() && isLookingAt(Blocks.OBSIDIAN, Objects.requireNonNull(getLookedAtBlockHitResult()).getBlockPos()) | isLookingAt(Blocks.BEDROCK, Objects.requireNonNull(getLookedAtBlockHitResult()).getBlockPos())) {
             breakingBlockTick++;
         } else breakingBlockTick = 0;
 
@@ -66,16 +72,16 @@ public class FastCrystalMod implements ClientModInitializer {
         if (hitCount == limitPackets())
             return;
 
-        if (lookingAtCrystal()) {
+        if (isLookingAtCrystal()) {
             if (mc.options.attackKey.isPressed())
                 hitCount++;
         }
         if (!mainHandStack.isOf(Items.END_CRYSTAL)) {
             return;
         }
-        if (mc.options.useKey.isPressed() && (isLookingAt(Blocks.OBSIDIAN, Objects.requireNonNull(lookedAtBlock()).getBlockPos()) | isLookingAt(Blocks.BEDROCK, Objects.requireNonNull(lookedAtBlock()).getBlockPos()))) {
-            ActionResult result = sendInteractBlockPacket(Objects.requireNonNull(lookedAtBlock()).getBlockPos(), Objects.requireNonNull(lookedAtBlock()).getSide());
-            if (canPlaceCrystalServer(Objects.requireNonNull(lookedAtBlock()).getBlockPos()) && result.isAccepted() && result.shouldSwingHand())
+        if (mc.options.useKey.isPressed() && (isLookingAt(Blocks.OBSIDIAN, Objects.requireNonNull(getLookedAtBlockHitResult()).getBlockPos()) | isLookingAt(Blocks.BEDROCK, Objects.requireNonNull(getLookedAtBlockHitResult()).getBlockPos()))) {
+            ActionResult result = sendInteractBlockPacket(Objects.requireNonNull(getLookedAtBlockHitResult()).getBlockPos(), Objects.requireNonNull(getLookedAtBlockHitResult()).getSide());
+            if (canPlaceCrystal(Objects.requireNonNull(getLookedAtBlockHitResult()).getBlockPos()) && result.isAccepted() && result.shouldSwingHand())
                 mc.player.swingHand(mc.player.getActiveHand());
         }
     }
@@ -109,25 +115,25 @@ public class FastCrystalMod implements ClientModInitializer {
         return null;
     }
 
-    private static boolean isLookingAt(Block block, BlockPos pos) {
+    public static boolean isLookingAt(Block block, BlockPos pos) {
         return Objects.requireNonNull(getBlockState(pos)).getBlock() == block;
     }
 
-    private static BlockHitResult lookedAtBlock() {
+    public static BlockHitResult getLookedAtBlockHitResult() {
         if (mc.world != null && mc.player != null) {
             Vec3d camPos = mc.player.getEyePos();
-            Vec3d clientLookVec = lookVec();
+            Vec3d clientLookVec = getLookVec();
             if (clientLookVec != null)
                 return mc.world.raycast(new RaycastContext(camPos, camPos.add(clientLookVec.multiply(4.5)), RaycastContext.ShapeType.OUTLINE, RaycastContext.FluidHandling.NONE, mc.player));
         }
         return null;
     }
 
-    private static boolean lookingAtCrystal() {
-        return mc.crosshairTarget instanceof EntityHitResult entity && (entity.getEntity() instanceof EndCrystalEntity || entity.getEntity() instanceof MagmaCubeEntity || entity.getEntity() instanceof SlimeEntity);
+    public static boolean isCrystal(Entity entity) {
+        return entity instanceof EndCrystalEntity | entity instanceof MagmaCubeEntity | entity instanceof SlimeEntity;
     }
 
-    private static Vec3d lookVec() {
+    public static Vec3d getLookVec() {
         if (mc.player != null) {
             float f = (float) Math.PI / 180;
             float pi = (float) Math.PI;
@@ -140,12 +146,12 @@ public class FastCrystalMod implements ClientModInitializer {
         return null;
     }
 
-    private static ActionResult sendInteractBlockPacket(BlockPos pos, Direction dir) {
+    public static ActionResult sendInteractBlockPacket(BlockPos pos, Direction dir) {
         Vec3d vec = new Vec3d(pos.getX(), pos.getY(), pos.getZ());
         return setPacket(vec, dir);
     }
 
-    private static ActionResult setPacket(Vec3d vec3d, Direction dir) {
+    public static ActionResult setPacket(Vec3d vec3d, Direction dir) {
         if (mc.world != null && mc.player != null && mc.interactionManager != null) {
             Vec3i vec3i = new Vec3i((int) vec3d.x, (int) vec3d.y, (int) vec3d.z);
             BlockPos pos = new BlockPos(vec3i);
@@ -162,7 +168,7 @@ public class FastCrystalMod implements ClientModInitializer {
         return stop;
     }
 
-    private static int getPing() {
+    public static int getPing() {
         if (mc.getNetworkHandler() == null | mc.player == null) return 0;
 
         PlayerListEntry playerListEntry = mc.getNetworkHandler().getPlayerListEntry(mc.player.getUuid());
@@ -170,7 +176,7 @@ public class FastCrystalMod implements ClientModInitializer {
         return playerListEntry.getLatency();
     }
 
-    private static boolean canPlaceCrystalServer(BlockPos block) {
+    public static boolean canPlaceCrystal(BlockPos block) {
         if (mc.world != null) {
             BlockState blockState = mc.world.getBlockState(block);
             if (!blockState.isOf(Blocks.OBSIDIAN) && !blockState.isOf(Blocks.BEDROCK))
@@ -187,14 +193,28 @@ public class FastCrystalMod implements ClientModInitializer {
         return false;
     }
 
-    public static Block currentBlock() {
-        if (mc.world != null && mc.player != null && mc.crosshairTarget instanceof BlockHitResult hit) {
+    public static Block getCurrentBlock() {
+        BlockHitResult hit = getLookedAtBlockHitResult();
+        if (mc.world != null && mc.player != null && hit != null) {
             Block block = mc.world.getBlockState(hit.getBlockPos()).getBlock();
             if (block != Blocks.AIR) {
                 return block;
             }
         }
         return null;
+    }
+
+    public static boolean isCloseToCrystal(BlockPos blockPos, World world) {
+        List<EndCrystalEntity> list = world.getEntitiesByType(EntityType.END_CRYSTAL, new Box(blockPos.getX(), blockPos.getY(), blockPos.getZ(), blockPos.getX() + 1, blockPos.getY() + 2, blockPos.getZ() + 1), e -> !e.isRemoved() && RenderUtil.isEntityRendered(e));
+        return !list.isEmpty();
+    }
+
+    public static boolean isLookingAtCrystal() {
+        return mc.crosshairTarget instanceof EntityHitResult result && result.getEntity() instanceof EndCrystalEntity crystal && !crystal.isRemoved() && RenderUtil.isEntityRendered(crystal);
+    }
+
+    public static boolean isLookingAtOrCloseToCrystal(BlockPos blockPos, World world) {
+        return isLookingAtCrystal() | isCloseToCrystal(blockPos, world);
     }
 
     public static void displayMessage(String message, String title) {
@@ -223,9 +243,7 @@ public class FastCrystalMod implements ClientModInitializer {
             ModMetadata metadata = modContainer.getMetadata();
             String id = metadata.getId();
             String name = metadata.getName();
-            if (id.equalsIgnoreCase(modId))
-                return true;
-            if (name.equalsIgnoreCase(modName))
+            if (id.equalsIgnoreCase(modId) | name.equalsIgnoreCase(modName))
                 return true;
         }
         return false;

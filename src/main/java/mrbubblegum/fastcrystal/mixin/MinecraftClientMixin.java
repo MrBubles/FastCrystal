@@ -37,7 +37,7 @@ public class MinecraftClientMixin {
         if (mc == null || mc.player == null | mc.world == null)
             return;
 
-        if (FastCrystalMod.fastCrystal.getValue() && FastCrystalMod.fastUse.getValue() && mc.player.isHolding(Items.END_CRYSTAL) && Objects.equals(FastCrystalMod.currentBlock(), Blocks.OBSIDIAN) | Objects.equals(FastCrystalMod.currentBlock(), Blocks.BEDROCK))
+        if (FastCrystalMod.fastCrystal.getValue() && FastCrystalMod.fastUse.getValue() && mc.player.isHolding(Items.END_CRYSTAL) && Objects.equals(FastCrystalMod.getCurrentBlock(), Blocks.OBSIDIAN) | Objects.equals(FastCrystalMod.getCurrentBlock(), Blocks.BEDROCK))
             itemUseCooldown = 0;
     }
 }
