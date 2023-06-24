@@ -48,7 +48,7 @@ public class FastCrystalMod implements ClientModInitializer {
     public static final BooleanSetting fastSwing = new BooleanSetting("FastSwing", false);
     public static final BooleanSetting placeOptimize = new BooleanSetting("PlaceOptimize", false);
     public static final BooleanSetting openedGui = new BooleanSetting("OpenedGui", false, true);
-    public static final List<Setting<?>> SETTINGS = Arrays.asList(fastCrystal, guiBind, removeCrystal, fastUse, fastAttack, /*moreCps,*/ noPickupAnim, fastSwing, /*placeOptimize,*/ openedGui);
+    public static final List<Setting<?>> SETTINGS = Arrays.asList(fastCrystal, guiBind, removeCrystal, fastUse, fastAttack, /*moreCps,*/ noPickupAnim, fastSwing, placeOptimize, openedGui);
     //    public static FastCrystalMod INSTANCE = new FastCrystalMod();
     public static MinecraftClient mc;
     public static int hitCount;
@@ -223,7 +223,7 @@ public class FastCrystalMod implements ClientModInitializer {
     }
 
     public static boolean isCloseToCrystal(BlockPos pos, World world) {
-        List<EndCrystalEntity> list = world.getEntitiesByType(EntityType.END_CRYSTAL, new Box(pos.getX(), pos.getY(), pos.getZ(), pos.getX() + 1, pos.getY() + 2, pos.getZ() + 1), e -> !e.isRemoved() && RenderUtil.isEntityRendered(e));
+        List<EndCrystalEntity> list = world.getEntitiesByType(EntityType.END_CRYSTAL, new Box(pos.getX(), pos.getY(), pos.getZ(), pos.getX() + 1, pos.getY() + 2, pos.getZ() + 1), e -> FastCrystalMod.isEntityInWorld(e) && !e.isRemoved() && RenderUtil.isEntityRendered(e));
         return !list.isEmpty();
     }
 //
@@ -233,7 +233,7 @@ public class FastCrystalMod implements ClientModInitializer {
 //    }
 
     public static boolean isLookingAtCrystal() {
-        return mc.crosshairTarget instanceof EntityHitResult result && result.getEntity() instanceof EndCrystalEntity crystal && !crystal.isRemoved() && RenderUtil.isEntityRendered(crystal);
+        return mc.crosshairTarget instanceof EntityHitResult result && result.getEntity() instanceof EndCrystalEntity crystal && FastCrystalMod.isEntityInWorld(crystal) && !crystal.isRemoved() && RenderUtil.isEntityRendered(crystal);
     }
 
 //    public static EndCrystalEntity getLookedAtCrystal() {
