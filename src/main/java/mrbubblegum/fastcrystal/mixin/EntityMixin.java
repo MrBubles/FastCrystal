@@ -23,6 +23,10 @@ public class EntityMixin {
             mc.player.getItemCooldownManager().set(crystalItem, 0);
             ((LivingEntityInterface) mc.player).setLastAttackedTicks(69);
             ((MinecraftClientInterface) mc).setAttackCooldown(0);
+            if (((HeldItemRendererInterface) mc.gameRenderer.firstPersonRenderer).getPrevEquipProgressMainHand() >= 0.9) {
+                ((HeldItemRendererInterface) mc.gameRenderer.firstPersonRenderer).setEquipProgressMainHand(1.0f);
+                ((HeldItemRendererInterface) mc.gameRenderer.firstPersonRenderer).setMainhandStack(mc.player.getMainHandStack());
+            }
         }
     }
 }

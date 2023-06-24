@@ -4,9 +4,6 @@ import mrbubblegum.fastcrystal.FastCrystalMod;
 import mrbubblegum.fastcrystal.utils.RenderUtil;
 import net.minecraft.client.network.ClientPlayerInteractionManager;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.decoration.EndCrystalEntity;
-import net.minecraft.entity.mob.MagmaCubeEntity;
-import net.minecraft.entity.mob.SlimeEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.network.packet.c2s.play.HandSwingC2SPacket;
 import net.minecraft.network.packet.c2s.play.PlayerInteractEntityC2SPacket;
@@ -45,17 +42,21 @@ public class ClientPlayerInteractionManagerMixin {
         });
     }
 
-    @Inject(at = @At("HEAD"), method = "attackEntity")
+    @Inject(at = @At("HEAD"), method = "attackEntity", cancellable = true)
     private void onAttackEntity(PlayerEntity player, Entity entity, CallbackInfo ci) {
         if (mc.world != null && mc.getNetworkHandler() != null && FastCrystalMod.fastCrystal.getValue() && FastCrystalMod.removeCrystal.getValue() && player.equals(mc.player) && FastCrystalMod.isCrystal(entity) && !entity.isRemoved() && RenderUtil.isEntityRendered(entity)) {
             syncSelectedSlot();
             mc.getNetworkHandler().sendPacket(PlayerInteractEntityC2SPacket.attack(entity, mc.player.isSneaking()));
             mc.getNetworkHandler().sendPacket(new HandSwingC2SPacket(Hand.MAIN_HAND));
-            if (entity instanceof EndCrystalEntity | entity instanceof SlimeEntity | entity instanceof MagmaCubeEntity) {
-                entity.kill();
-                entity.remove(Entity.RemovalReason.KILLED);
-                entity.onRemoved();
-            }
-        }
+            entity.kill();
+            entity.remove(Entity.RemovalReason.KILLED);
+            entity.onRemoved();
+//        }
+//
+//        if (FastCrystalMod.fastCrystal.getValue() && FastCrystalMod.placeOptimize.getValue() && player.equals(mc.player) && FastCrystalMod.isCrystal(entity) && FastCrystalMod.attackedCrystals.contains(entity) && !mc.player.isSpectator()) {
+//            mc.player.attack(entity);
+//            mc.player.resetLastAttackedTicks();
+//            ci.cancel();
+        } /*else FastCrystalMod.attackedCrystals.add(entity);*/
     }
 }

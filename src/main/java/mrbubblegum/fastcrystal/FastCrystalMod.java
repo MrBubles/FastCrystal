@@ -32,6 +32,7 @@ import net.minecraft.world.World;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -45,12 +46,14 @@ public class FastCrystalMod implements ClientModInitializer {
     public static final BooleanSetting fastAttack = new BooleanSetting("FastAttack", true);
     public static final BooleanSetting noPickupAnim = new BooleanSetting("NoPickupAnim", false);
     public static final BooleanSetting fastSwing = new BooleanSetting("FastSwing", false);
+    public static final BooleanSetting placeOptimize = new BooleanSetting("PlaceOptimize", false);
     public static final BooleanSetting openedGui = new BooleanSetting("OpenedGui", false, true);
-    public static final List<Setting<?>> SETTINGS = Arrays.asList(fastCrystal, guiBind, removeCrystal, fastUse, fastAttack, /*moreCps,*/ noPickupAnim, openedGui);
-    public static FastCrystalMod INSTANCE = new FastCrystalMod();
+    public static final List<Setting<?>> SETTINGS = Arrays.asList(fastCrystal, guiBind, removeCrystal, fastUse, fastAttack, /*moreCps,*/ noPickupAnim, fastSwing, /*placeOptimize,*/ openedGui);
+    //    public static FastCrystalMod INSTANCE = new FastCrystalMod();
     public static MinecraftClient mc;
     public static int hitCount;
     public static int breakingBlockTick;
+//    public static List<Entity> attackedCrystals = new ArrayList<>();
 
     public static void useOwnTicks() {
         if (mc.world == null | mc.player == null | mc.interactionManager == null) {
@@ -176,17 +179,32 @@ public class FastCrystalMod implements ClientModInitializer {
         return playerListEntry.getLatency();
     }
 
+    public static boolean isEntityInWorld(Entity entity) {
+        if (mc.world != null) {
+            return iterableToList(mc.world.getEntities()).contains(entity);
+        }
+        return false;
+    }
+
+    public static <T> List<T> iterableToList(Iterable<T> iterable) {
+        List<T> list = new ArrayList<>();
+        for (T element : iterable) {
+            list.add(element);
+        }
+        return list;
+    }
+
     public static boolean canPlaceCrystal(BlockPos block) {
         if (mc.world != null) {
             BlockState blockState = mc.world.getBlockState(block);
             if (!blockState.isOf(Blocks.OBSIDIAN) && !blockState.isOf(Blocks.BEDROCK))
                 return false;
-            BlockPos blockPos2 = block.up();
-            if (!mc.world.isAir(blockPos2))
+            BlockPos pos2 = block.up();
+            if (!mc.world.isAir(pos2))
                 return false;
-            double d = blockPos2.getX();
-            double e = blockPos2.getY();
-            double f = blockPos2.getZ();
+            double d = pos2.getX();
+            double e = pos2.getY();
+            double f = pos2.getZ();
             List<Entity> list = mc.world.getOtherEntities(null, new Box(d, e, f, d + 1.0D, e + 2.0D, f + 1.0D));
             return list.isEmpty();
         }
@@ -204,38 +222,57 @@ public class FastCrystalMod implements ClientModInitializer {
         return null;
     }
 
-    public static boolean isCloseToCrystal(BlockPos blockPos, World world) {
-        List<EndCrystalEntity> list = world.getEntitiesByType(EntityType.END_CRYSTAL, new Box(blockPos.getX(), blockPos.getY(), blockPos.getZ(), blockPos.getX() + 1, blockPos.getY() + 2, blockPos.getZ() + 1), e -> !e.isRemoved() && RenderUtil.isEntityRendered(e));
+    public static boolean isCloseToCrystal(BlockPos pos, World world) {
+        List<EndCrystalEntity> list = world.getEntitiesByType(EntityType.END_CRYSTAL, new Box(pos.getX(), pos.getY(), pos.getZ(), pos.getX() + 1, pos.getY() + 2, pos.getZ() + 1), e -> !e.isRemoved() && RenderUtil.isEntityRendered(e));
         return !list.isEmpty();
     }
+//
+//    public static EndCrystalEntity getBlockPosCrystal(BlockPos pos, World world) {
+//        List<EndCrystalEntity> list = world.getEntitiesByType(EntityType.END_CRYSTAL, new Box(pos.getX(), pos.getY(), pos.getZ(), pos.getX() + 1, pos.getY() + 2, pos.getZ() + 1), e -> !e.isRemoved() && RenderUtil.isEntityRendered(e));
+//        return list.get(0);
+//    }
 
     public static boolean isLookingAtCrystal() {
         return mc.crosshairTarget instanceof EntityHitResult result && result.getEntity() instanceof EndCrystalEntity crystal && !crystal.isRemoved() && RenderUtil.isEntityRendered(crystal);
     }
 
-    public static boolean isLookingAtOrCloseToCrystal(BlockPos blockPos, World world) {
-        return isLookingAtCrystal() | isCloseToCrystal(blockPos, world);
-    }
+//    public static EndCrystalEntity getLookedAtCrystal() {
+//        if (mc.crosshairTarget instanceof EntityHitResult result && result.getEntity() instanceof EndCrystalEntity crystal && !crystal.isRemoved() && RenderUtil.isEntityRendered(crystal)) {
+//            return crystal;
+//        }
+//        return null;
+//    }
+
+//    public static boolean isCrystalLookedAt(EndCrystalEntity crystal) {
+//        EndCrystalEntity lookedAtCrystal = getLookedAtCrystal();
+//        return crystal.equals(lookedAtCrystal);
+//    }
+
+//    public static boolean isLookingAtOrCloseToCrystal(BlockPos pos, World world) {
+//        return isLookingAtCrystal() | isCloseToCrystal(pos, world);
+//    }
 
     public static void displayMessage(String message, String title) {
-        try {
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        } catch (Exception ignored) {
-        }
+        mc.execute(() -> {
+            try {
+                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+            } catch (Exception ignored) {
+            }
 
-        JFrame frame = new JFrame();
-        frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-        frame.setLocationRelativeTo(null);
-        frame.setAlwaysOnTop(true);
+            JFrame frame = new JFrame();
+            frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+            frame.setLocationRelativeTo(null);
+            frame.setAlwaysOnTop(true);
 
-        JPanel panel = new JPanel(new BorderLayout(10, 10));
-        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+            JPanel panel = new JPanel(new BorderLayout(10, 10));
+            panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        JLabel messageLabel = new JLabel(message);
-        panel.add(messageLabel, BorderLayout.CENTER);
+            JLabel messageLabel = new JLabel(message);
+            panel.add(messageLabel, BorderLayout.CENTER);
 
-        JOptionPane.showMessageDialog(frame, panel, title, JOptionPane.PLAIN_MESSAGE);
-        frame.dispose();
+            JOptionPane.showMessageDialog(frame, panel, title, JOptionPane.PLAIN_MESSAGE);
+            frame.dispose();
+        });
     }
 
     public boolean isModLoaded(String modId, String modName) {
@@ -251,19 +288,22 @@ public class FastCrystalMod implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
-        if (isModLoaded("walksycrystaloptimizer", "Walksy Optimizer"))
-            displayMessage("WalksyCrystalOptimizer is not needed for FastCrystal, please disable it", "Warning!");
-        if (isModLoaded("marlows-crystal-optimizer", "Marlow's Crystal Optimizer"))
-            displayMessage("MarlowCrystalOptimizer is not needed for FastCrystal, please disable it", "Warning!");
-        if (isModLoaded("crystaloptimizer", "CrystalOptimizer"))
-            displayMessage("CrystalOptimizer is not needed for FastCrystal, please disable it", "Warning!");
-
+        System.setProperty("java.awt.headless", "false");
         mc = MinecraftClient.getInstance();
-        new LoadConfig();
-        new SaveConfig();
-        Runtime.getRuntime().addShutdownHook(new Thread(SaveConfig::saveAllSettings));
+        mc.execute(() -> {
+            if (isModLoaded("walksycrystaloptimizer", "Walksy Optimizer"))
+                displayMessage("WalksyCrystalOptimizer is not needed for FastCrystal, please disable it", "Warning!");
+            if (isModLoaded("marlows-crystal-optimizer", "Marlow's Crystal Optimizer"))
+                displayMessage("MarlowCrystalOptimizer is not needed for FastCrystal, please disable it", "Warning!");
+            if (isModLoaded("crystaloptimizer", "CrystalOptimizer"))
+                displayMessage("CrystalOptimizer is not needed for FastCrystal, please disable it", "Warning!");
 
-        if (!openedGui.getValue())
-            displayMessage("The fastcrystal gui bind is " + guiBind.getStringValue(), "");
+            new LoadConfig();
+            new SaveConfig();
+            Runtime.getRuntime().addShutdownHook(new Thread(SaveConfig::saveAllSettings));
+
+            if (!openedGui.getValue())
+                displayMessage("The fastcrystal gui bind is " + guiBind.getStringValue(), "");
+        });
     }
 }

@@ -4,10 +4,11 @@
   "compatibilityLevel": "JAVA_8",
   "client": [
     "ClientPlayerEntityMixin",
-    "ClientPlayerInteractionManagerInterface",
     "ClientPlayerInteractionManagerMixin",
+    "ClientPlayNetworkHandlerMixin",
     "ClientWorldMixin",
     "EntityRendererMixin",
+    "HeldItemRendererInterface",
     "ItemStackMixin",
     "KeyboardMixin",
     "MinecraftClientInterface",
