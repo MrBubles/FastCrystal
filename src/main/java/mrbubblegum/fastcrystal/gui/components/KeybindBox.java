@@ -12,19 +12,18 @@ import static net.minecraft.client.gui.DrawableHelper.fill;
 public class KeybindBox implements FastCrystalGuiObj {
 
     private final KeybindSetting setting;
-    private final int x, y, width, height;
+    private final int x;
+    private final int y;
     private final int padding;
     private final int boxWidth;
     private final int boxHeight;
     private boolean listening;
     private int keybind;
 
-    public KeybindBox(KeybindSetting setting, int x, int y, int width, int height) {
+    public KeybindBox(KeybindSetting setting, int x, int y, int height) {
         this.setting = setting;
         this.x = x;
         this.y = y;
-        this.width = width;
-        this.height = height;
         listening = false;
         keybind = setting.getValue();
         this.padding = height / 4;
@@ -98,12 +97,18 @@ public class KeybindBox implements FastCrystalGuiObj {
                 } else {
                     mc.textRenderer.drawWithShadow(matrices, keyName, x + boxWidth / 2f - mc.textRenderer.getWidth(keyName) / 2f, y + boxHeight / 2f - mc.textRenderer.fontHeight / 2f, -1);
                 }
+                if (isWithin(mouseX, mouseY)) {
+                    matrices.translate(0.0f, 0.0f, 1.0f);
+                    fill(matrices, mouseX + 5, mouseY - 1, mouseX + 6 + mc.textRenderer.getWidth(setting.getDescription()), mouseY + 9, 0xEF000000);
+                    mc.textRenderer.drawWithShadow(matrices, setting.getDescription(), mouseX + 6, mouseY, -1);
+                    matrices.translate(0.0f, 0.0f, -1.0f);
+                }
             }
         });
     }
 
     @Override
     public boolean isWithin(double mouseX, double mouseY) {
-        return mouseX > x && mouseY > y && mouseX < x + width && mouseY < y + height;
+        return mouseX > x && mouseY > y && mouseX < x + boxWidth && mouseY < y + boxHeight;
     }
 }

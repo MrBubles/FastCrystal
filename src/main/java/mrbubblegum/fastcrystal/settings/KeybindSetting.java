@@ -101,8 +101,8 @@ public class KeybindSetting extends Setting<Integer> {
         KEY_MAP.put("none", GLFW.GLFW_PLATFORM_NULL);
     }
 
-    public KeybindSetting(String name, String defaultValue) {
-        super(name, stringToKey(defaultValue));
+    public KeybindSetting(String name, String defaultValue, String description) {
+        super(name, stringToKey(defaultValue), description);
     }
 
     public static int stringToKey(String keyName) {

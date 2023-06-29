@@ -1,5 +1,6 @@
 package mrbubblegum.fastcrystal;
 
+import com.google.common.collect.Lists;
 import mrbubblegum.fastcrystal.config.LoadConfig;
 import mrbubblegum.fastcrystal.config.SaveConfig;
 import mrbubblegum.fastcrystal.settings.BooleanSetting;
@@ -16,7 +17,6 @@ import net.minecraft.block.Blocks;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.PlayerListEntry;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
 import net.minecraft.entity.decoration.EndCrystalEntity;
 import net.minecraft.entity.mob.MagmaCubeEntity;
 import net.minecraft.entity.mob.SlimeEntity;
@@ -32,23 +32,22 @@ import net.minecraft.world.World;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
 public class FastCrystalMod implements ClientModInitializer {
 
-    public static final BooleanSetting fastCrystal = new BooleanSetting("FastCrystal", true);
-    public static final KeybindSetting guiBind = new KeybindSetting("UiBind", "backslash");
-    public static final BooleanSetting removeCrystal = new BooleanSetting("RemoveCrystal", true);
-    public static final BooleanSetting fastUse = new BooleanSetting("FastUse", true);
-    public static final BooleanSetting fastAttack = new BooleanSetting("FastAttack", true);
-    public static final BooleanSetting noPickupAnim = new BooleanSetting("NoPickupAnim", false);
-    public static final BooleanSetting fastSwing = new BooleanSetting("FastSwing", false);
-    public static final BooleanSetting placeOptimize = new BooleanSetting("PlaceOptimize", false);
-    public static final BooleanSetting openedGui = new BooleanSetting("OpenedGui", false, true);
-    public static final List<Setting<?>> SETTINGS = Arrays.asList(fastCrystal, guiBind, removeCrystal, fastUse, fastAttack, /*moreCps,*/ noPickupAnim, fastSwing, placeOptimize, openedGui);
+    public static final BooleanSetting fastCrystal = new BooleanSetting("FastCrystal", true, "The entire mod");
+    public static final KeybindSetting guiBind = new KeybindSetting("UiBind", "backslash", "The FastCrystal gui bind");
+    public static final BooleanSetting removeCrystal = new BooleanSetting("RemoveCrystal", true, "Removes the crystal you hit (marlow's crystal optimizer)");
+    public static final BooleanSetting fastUse = new BooleanSetting("FastUse", true, "Makes you use a crystal faster");
+    public static final BooleanSetting fastAttack = new BooleanSetting("FastAttack", true, "Makes it so whenever you hold a crystal you attack like you're in 1.7");
+    public static final BooleanSetting noPickupAnim = new BooleanSetting("NoPickupAnim", false, "Disables the pickup item packet");
+    public static final BooleanSetting fastSwing = new BooleanSetting("FastSwing", false, "Speeds up the swing animation");
+    public static final BooleanSetting instantPlace = new BooleanSetting("InstantPlace", false, "Makes you instant place crystals");
+    public static final BooleanSetting openedGui = new BooleanSetting("OpenedGui", false, "", true);
+    public static final List<Setting<?>> SETTINGS = Arrays.asList(fastCrystal, guiBind, removeCrystal, fastUse, fastAttack, /*moreCps,*/ noPickupAnim, fastSwing, instantPlace, openedGui);
     //    public static FastCrystalMod INSTANCE = new FastCrystalMod();
     public static MinecraftClient mc;
     public static int hitCount;
@@ -166,7 +165,6 @@ public class FastCrystalMod implements ClientModInitializer {
 
     public static int limitPackets() {
         int stop = 2;
-        if (getPing() > 50) stop = 2;
         if (getPing() < 50) stop = 1;
         return stop;
     }
@@ -187,11 +185,7 @@ public class FastCrystalMod implements ClientModInitializer {
     }
 
     public static <T> List<T> iterableToList(Iterable<T> iterable) {
-        List<T> list = new ArrayList<>();
-        for (T element : iterable) {
-            list.add(element);
-        }
-        return list;
+        return Lists.newArrayList(iterable);
     }
 
     public static boolean canPlaceCrystal(BlockPos block) {
@@ -211,7 +205,7 @@ public class FastCrystalMod implements ClientModInitializer {
         return false;
     }
 
-    public static Block getCurrentBlock() {
+    public static Block getLookedAtBlock() {
         BlockHitResult hit = getLookedAtBlockHitResult();
         if (mc.world != null && mc.player != null && hit != null) {
             Block block = mc.world.getBlockState(hit.getBlockPos()).getBlock();
@@ -222,22 +216,31 @@ public class FastCrystalMod implements ClientModInitializer {
         return null;
     }
 
+//    public static BlockPos getLookedAtBlockPos() {
+//        BlockHitResult hit = getLookedAtBlockHitResult();
+//        if (hit != null) {
+//            return hit.getBlockPos();
+//        }
+//        return null;
+//    }
+
     public static boolean isCloseToCrystal(BlockPos pos, World world) {
-        List<EndCrystalEntity> list = world.getEntitiesByType(EntityType.END_CRYSTAL, new Box(pos.getX(), pos.getY(), pos.getZ(), pos.getX() + 1, pos.getY() + 2, pos.getZ() + 1), e -> FastCrystalMod.isEntityInWorld(e) && !e.isRemoved() && RenderUtil.isEntityRendered(e));
-        return !list.isEmpty();
+        return world.getEntitiesByClass(Entity.class, new Box(pos.getX(), pos.getY(), pos.getZ(), pos.getX() + 1, pos.getY() + 2, pos.getZ() + 1), FastCrystalMod::isEntityExisting)
+                .parallelStream()
+                .anyMatch(FastCrystalMod::isCrystal);
     }
 //
 //    public static EndCrystalEntity getBlockPosCrystal(BlockPos pos, World world) {
-//        List<EndCrystalEntity> list = world.getEntitiesByType(EntityType.END_CRYSTAL, new Box(pos.getX(), pos.getY(), pos.getZ(), pos.getX() + 1, pos.getY() + 2, pos.getZ() + 1), e -> !e.isRemoved() && RenderUtil.isEntityRendered(e));
+//        List<EndCrystalEntity> list = world.getEntitiesByType(EntityType.END_CRYSTAL, new Box(pos.getX(), pos.getY(), pos.getZ(), pos.getX() + 1, pos.getY() + 2, pos.getZ() + 1), FastCrystalMod::isEntityExisting);
 //        return list.get(0);
 //    }
 
     public static boolean isLookingAtCrystal() {
-        return mc.crosshairTarget instanceof EntityHitResult result && result.getEntity() instanceof EndCrystalEntity crystal && FastCrystalMod.isEntityInWorld(crystal) && !crystal.isRemoved() && RenderUtil.isEntityRendered(crystal);
+        return mc.crosshairTarget instanceof EntityHitResult result && isCrystal(result.getEntity()) && FastCrystalMod.isEntityExisting(result.getEntity());
     }
 
 //    public static EndCrystalEntity getLookedAtCrystal() {
-//        if (mc.crosshairTarget instanceof EntityHitResult result && result.getEntity() instanceof EndCrystalEntity crystal && !crystal.isRemoved() && RenderUtil.isEntityRendered(crystal)) {
+//        if (mc.crosshairTarget instanceof EntityHitResult result && result.getEntity() instanceof EndCrystalEntity crystal && FastCrystalMod.isEntityExisting(crystal)) {
 //            return crystal;
 //        }
 //        return null;
@@ -248,9 +251,13 @@ public class FastCrystalMod implements ClientModInitializer {
 //        return crystal.equals(lookedAtCrystal);
 //    }
 
-//    public static boolean isLookingAtOrCloseToCrystal(BlockPos pos, World world) {
-//        return isLookingAtCrystal() | isCloseToCrystal(pos, world);
-//    }
+    public static boolean isEntityExisting(Entity entity) {
+        return entity.isAlive() && isEntityInWorld(entity) && RenderUtil.isEntityRendered(entity);
+    }
+
+    public static boolean isLookingAtOrCloseToCrystal(BlockPos pos, World world) {
+        return isLookingAtCrystal() | isCloseToCrystal(pos, world);
+    }
 
     public static void displayMessage(String message, String title) {
         mc.execute(() -> {

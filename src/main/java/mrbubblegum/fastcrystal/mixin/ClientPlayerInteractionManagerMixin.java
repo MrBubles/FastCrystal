@@ -1,7 +1,6 @@
 package mrbubblegum.fastcrystal.mixin;
 
 import mrbubblegum.fastcrystal.FastCrystalMod;
-import mrbubblegum.fastcrystal.utils.RenderUtil;
 import net.minecraft.client.network.ClientPlayerInteractionManager;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -44,7 +43,7 @@ public class ClientPlayerInteractionManagerMixin {
 
     @Inject(at = @At("HEAD"), method = "attackEntity")
     private void onAttackEntity(PlayerEntity player, Entity entity, CallbackInfo ci) {
-        if (mc.world != null && mc.getNetworkHandler() != null && FastCrystalMod.fastCrystal.getValue() && FastCrystalMod.removeCrystal.getValue() && player.equals(mc.player) && FastCrystalMod.isCrystal(entity) && FastCrystalMod.isEntityInWorld(entity) && !entity.isRemoved() && RenderUtil.isEntityRendered(entity)) {
+        if (mc.world != null && mc.getNetworkHandler() != null && FastCrystalMod.fastCrystal.getValue() && FastCrystalMod.removeCrystal.getValue() && player.equals(mc.player) && FastCrystalMod.isCrystal(entity) && FastCrystalMod.isEntityExisting(entity)) {
             syncSelectedSlot();
             mc.getNetworkHandler().sendPacket(PlayerInteractEntityC2SPacket.attack(entity, mc.player.isSneaking()));
             mc.getNetworkHandler().sendPacket(new HandSwingC2SPacket(Hand.MAIN_HAND));

@@ -44,7 +44,7 @@ public class FastCrystalScreen extends Screen {
 //            } else if (setting instanceof IntegerSetting) {
 //                objs.add(new IntSlider((IntegerSetting) setting, 80, 50 + (settingCount << 4), 80, 12));
                     } else if (setting instanceof KeybindSetting) {
-                        objs.add(new KeybindBox((KeybindSetting) setting, 80, 50 + (settingCount << 4), 70, 12));
+                        objs.add(new KeybindBox((KeybindSetting) setting, 80, 50 + (settingCount << 4), 12));
                     }
                 }
             }
