@@ -43,13 +43,16 @@ public class ClientPlayerInteractionManagerMixin {
 
     @Inject(at = @At("HEAD"), method = "attackEntity")
     private void onAttackEntity(PlayerEntity player, Entity entity, CallbackInfo ci) {
-        if (mc.world != null && mc.getNetworkHandler() != null && FastCrystalMod.fastCrystal.getValue() && FastCrystalMod.removeCrystal.getValue() && player.equals(mc.player) && FastCrystalMod.isCrystal(entity) && FastCrystalMod.isEntityExisting(entity)) {
-            syncSelectedSlot();
-            mc.getNetworkHandler().sendPacket(PlayerInteractEntityC2SPacket.attack(entity, mc.player.isSneaking()));
-            mc.getNetworkHandler().sendPacket(new HandSwingC2SPacket(Hand.MAIN_HAND));
+        if (mc == null || mc.player == null | mc.world == null | mc.getNetworkHandler() == null)
+            return;
+
+        if (FastCrystalMod.fastCrystal.getValue() && FastCrystalMod.removeCrystal.getValue() && player.equals(mc.player) && FastCrystalMod.isCrystal(entity) && FastCrystalMod.isEntityExisting(entity)) {
             entity.kill();
             entity.remove(Entity.RemovalReason.KILLED);
             entity.onRemoved();
+            syncSelectedSlot();
+            mc.getNetworkHandler().sendPacket(PlayerInteractEntityC2SPacket.attack(entity, mc.player.isSneaking()));
+            mc.getNetworkHandler().sendPacket(new HandSwingC2SPacket(Hand.MAIN_HAND));
 //        }
 //
 //        if (FastCrystalMod.fastCrystal.getValue() && FastCrystalMod.placeOptimize.getValue() && player.equals(mc.player) && FastCrystalMod.isCrystal(entity) && FastCrystalMod.attackedCrystals.contains(entity) && !mc.player.isSpectator()) {

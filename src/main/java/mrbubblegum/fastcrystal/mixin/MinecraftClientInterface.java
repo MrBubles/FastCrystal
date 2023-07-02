@@ -8,7 +8,13 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 public interface MinecraftClientInterface {
 
     @Accessor("attackCooldown")
+    int getAttackCooldown();
+
+    @Accessor("attackCooldown")
     void setAttackCooldown(int cooldown);
+
+    @Accessor("itemUseCooldown")
+    int getItemUseCooldown();
 
     @Accessor("itemUseCooldown")
     void setItemUseCooldown(int cooldown);

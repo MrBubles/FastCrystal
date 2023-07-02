@@ -51,6 +51,8 @@ public class FastCrystalMod implements ClientModInitializer {
     //    public static FastCrystalMod INSTANCE = new FastCrystalMod();
     public static MinecraftClient mc;
     public static int hitCount;
+    //    public static int itemUseCooldown;
+//    public static int attackCooldown;
     public static int breakingBlockTick;
 //    public static List<Entity> attackedCrystals = new ArrayList<>();
 
@@ -82,8 +84,8 @@ public class FastCrystalMod implements ClientModInitializer {
             return;
         }
         if (mc.options.useKey.isPressed() && (isLookingAt(Blocks.OBSIDIAN, Objects.requireNonNull(getLookedAtBlockHitResult()).getBlockPos()) | isLookingAt(Blocks.BEDROCK, Objects.requireNonNull(getLookedAtBlockHitResult()).getBlockPos()))) {
-            ActionResult result = sendInteractBlockPacket(Objects.requireNonNull(getLookedAtBlockHitResult()).getBlockPos(), Objects.requireNonNull(getLookedAtBlockHitResult()).getSide());
-            if (canPlaceCrystal(Objects.requireNonNull(getLookedAtBlockHitResult()).getBlockPos()) && result.isAccepted() && result.shouldSwingHand())
+            ActionResult hit = sendInteractBlockPacket(Objects.requireNonNull(getLookedAtBlockHitResult()).getBlockPos(), Objects.requireNonNull(getLookedAtBlockHitResult()).getSide());
+            if (canPlaceCrystal(Objects.requireNonNull(getLookedAtBlockHitResult()).getBlockPos()) && hit.isAccepted() && hit.shouldSwingHand())
                 mc.player.swingHand(mc.player.getActiveHand());
         }
     }
@@ -157,8 +159,8 @@ public class FastCrystalMod implements ClientModInitializer {
         if (mc.world != null && mc.player != null && mc.interactionManager != null) {
             Vec3i vec3i = new Vec3i((int) vec3d.x, (int) vec3d.y, (int) vec3d.z);
             BlockPos pos = new BlockPos(vec3i);
-            BlockHitResult result = new BlockHitResult(vec3d, dir, pos, false);
-            return mc.interactionManager.interactBlock(mc.player, mc.player.getActiveHand(), result);
+            BlockHitResult hit = new BlockHitResult(vec3d, dir, pos, false);
+            return mc.interactionManager.interactBlock(mc.player, mc.player.getActiveHand(), hit);
         }
         return null;
     }
@@ -236,11 +238,11 @@ public class FastCrystalMod implements ClientModInitializer {
 //    }
 
     public static boolean isLookingAtCrystal() {
-        return mc.crosshairTarget instanceof EntityHitResult result && isCrystal(result.getEntity()) && FastCrystalMod.isEntityExisting(result.getEntity());
+        return mc.crosshairTarget instanceof EntityHitResult hit && isCrystal(hit.getEntity()) && FastCrystalMod.isEntityExisting(hit.getEntity());
     }
 
 //    public static EndCrystalEntity getLookedAtCrystal() {
-//        if (mc.crosshairTarget instanceof EntityHitResult result && result.getEntity() instanceof EndCrystalEntity crystal && FastCrystalMod.isEntityExisting(crystal)) {
+//        if (mc.crosshairTarget instanceof EntityHitResult hit && hit.getEntity() instanceof EndCrystalEntity crystal && FastCrystalMod.isEntityExisting(crystal)) {
 //            return crystal;
 //        }
 //        return null;

@@ -45,13 +45,13 @@ public class EndCrystalItemMixin {
             return ActionResult.FAIL;
 
         if (world instanceof ServerWorld serverWorld && mc.isIntegratedServerRunning()) {
-            EndCrystalEntity endCrystalEntity = new EndCrystalEntity(world, crystalPos.getX() + 0.5, crystalPos.getY(), crystalPos.getZ() + 0.5);
-            endCrystalEntity.setShowBottom(false);
-            world.spawnEntity(endCrystalEntity);
+            EndCrystalEntity crystal = new EndCrystalEntity(world, crystalPos.getX() + 0.5, crystalPos.getY(), crystalPos.getZ() + 0.5);
+            crystal.setShowBottom(false);
+            world.spawnEntity(crystal);
             world.emitGameEvent(context.getPlayer(), GameEvent.ENTITY_PLACE, crystalPos);
-            EnderDragonFight enderDragonFight = serverWorld.getEnderDragonFight();
-            if (enderDragonFight != null)
-                enderDragonFight.respawnDragon();
+            EnderDragonFight dragonFight = serverWorld.getEnderDragonFight();
+            if (dragonFight != null)
+                dragonFight.respawnDragon();
             context.getStack().decrement(1);
         }
         return ActionResult.success(world.isClient);
