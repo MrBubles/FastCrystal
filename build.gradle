@@ -8,11 +8,6 @@ targetCompatibility = JavaVersion.VERSION_17
 
 archivesBaseName = project.archives_base_name
 version = project.mod_version
-group = project.maven_group
-
-repositories {
-    maven { url "https://api.modrinth.com/maven" }
-}
 
 dependencies {
     //to change the versions see the gradle.properties file
@@ -21,9 +16,6 @@ dependencies {
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
-
-    modImplementation "maven.modrinth:midnightlib:${project.midnightlib_version}"
-    include "maven.modrinth:midnightlib:${project.midnightlib_version}"
 }
 
 processResources {

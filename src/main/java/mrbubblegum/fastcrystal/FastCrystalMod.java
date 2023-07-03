@@ -41,14 +41,12 @@ public class FastCrystalMod implements ClientModInitializer {
     public static final BooleanSetting fastCrystal = new BooleanSetting("FastCrystal", true, "The entire mod");
     public static final KeybindSetting guiBind = new KeybindSetting("UiBind", "backslash", "The FastCrystal gui bind");
     public static final BooleanSetting removeCrystal = new BooleanSetting("RemoveCrystal", true, "Removes the crystal you hit (marlow's crystal optimizer)");
-    public static final BooleanSetting fastUse = new BooleanSetting("FastUse", true, "Makes you use a crystal faster");
     public static final BooleanSetting fastAttack = new BooleanSetting("FastAttack", true, "Makes it so whenever you hold a crystal you attack like you're in 1.7");
     public static final BooleanSetting noPickupAnim = new BooleanSetting("NoPickupAnim", false, "Disables the pickup item packet");
-    public static final BooleanSetting fastSwing = new BooleanSetting("FastSwing", false, "Speeds up the swing animation");
     public static final BooleanSetting instantPlace = new BooleanSetting("InstantPlace", false, "Makes you instant place crystals");
     public static final BooleanSetting openedGui = new BooleanSetting("OpenedGui", false, "", true);
-    public static final List<Setting<?>> SETTINGS = Arrays.asList(fastCrystal, guiBind, removeCrystal, fastUse, fastAttack, /*moreCps,*/ noPickupAnim, fastSwing, instantPlace, openedGui);
-    public static FastCrystalMod INSTANCE = new FastCrystalMod();
+    public static final List<Setting<?>> SETTINGS = Arrays.asList(fastCrystal, guiBind, removeCrystal, fastAttack, /*moreCps,*/ noPickupAnim, instantPlace, openedGui);
+    //    public static FastCrystalMod INSTANCE = new FastCrystalMod();
     public static MinecraftClient mc;
     public static int hitCount;
     //    public static int itemUseCooldown;

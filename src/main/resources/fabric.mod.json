@@ -20,8 +20,5 @@
   },
   "mixins": [
     "fastcrystal.mixins.json"
-  ],
-  "depends": {
-    "midnightlib": "*"
-  }
+  ]
 }
