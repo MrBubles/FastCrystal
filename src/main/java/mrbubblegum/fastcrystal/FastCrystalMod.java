@@ -311,6 +311,7 @@ public class FastCrystalMod implements ClientModInitializer {
         mc.execute(() -> {
 
             new SaveConfig();
+            Runtime.getRuntime().addShutdownHook(new Thread(SaveConfig::saveAllSettings));
             new LoadConfig();
 
             if (!openedGui.getValue())
