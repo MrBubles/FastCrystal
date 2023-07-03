@@ -48,7 +48,7 @@ public class FastCrystalMod implements ClientModInitializer {
     public static final BooleanSetting instantPlace = new BooleanSetting("InstantPlace", false, "Makes you instant place crystals");
     public static final BooleanSetting openedGui = new BooleanSetting("OpenedGui", false, "", true);
     public static final List<Setting<?>> SETTINGS = Arrays.asList(fastCrystal, guiBind, removeCrystal, fastUse, fastAttack, /*moreCps,*/ noPickupAnim, fastSwing, instantPlace, openedGui);
-    //    public static FastCrystalMod INSTANCE = new FastCrystalMod();
+    public static FastCrystalMod INSTANCE = new FastCrystalMod();
     public static MinecraftClient mc;
     public static int hitCount;
     //    public static int itemUseCooldown;
@@ -261,8 +261,13 @@ public class FastCrystalMod implements ClientModInitializer {
         return isLookingAtCrystal() | isCloseToCrystal(pos, world);
     }
 
+    public static void execute(Runnable runnable) {
+        Thread thread = new Thread(runnable);
+        thread.start();
+    }
+
     public static void displayMessage(String message, String title) {
-        mc.execute(() -> {
+        execute(() -> {
             try {
                 UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
             } catch (Exception ignored) {
@@ -295,24 +300,28 @@ public class FastCrystalMod implements ClientModInitializer {
         return false;
     }
 
+//    public void onPreInitializeClient() {
+//        Runtime.getRuntime().addShutdownHook(new Thread(SaveConfig::saveAllSettings));
+//    }
+
     @Override
     public void onInitializeClient() {
         System.setProperty("java.awt.headless", "false");
         mc = MinecraftClient.getInstance();
         mc.execute(() -> {
+
+            new SaveConfig();
+            new LoadConfig();
+
+            if (!openedGui.getValue())
+                displayMessage("The fastcrystal gui bind is " + guiBind.getStringValue(), "");
+
             if (isModLoaded("walksycrystaloptimizer", "Walksy Optimizer"))
                 displayMessage("WalksyCrystalOptimizer is not needed for FastCrystal, please disable it", "Warning!");
             if (isModLoaded("marlows-crystal-optimizer", "Marlow's Crystal Optimizer"))
                 displayMessage("MarlowCrystalOptimizer is not needed for FastCrystal, please disable it", "Warning!");
             if (isModLoaded("crystaloptimizer", "CrystalOptimizer"))
                 displayMessage("CrystalOptimizer is not needed for FastCrystal, please disable it", "Warning!");
-
-            new LoadConfig();
-            new SaveConfig();
-            Runtime.getRuntime().addShutdownHook(new Thread(SaveConfig::saveAllSettings));
-
-            if (!openedGui.getValue())
-                displayMessage("The fastcrystal gui bind is " + guiBind.getStringValue(), "");
         });
     }
 }

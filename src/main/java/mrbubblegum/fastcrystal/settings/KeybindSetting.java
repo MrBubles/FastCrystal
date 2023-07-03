@@ -98,7 +98,7 @@ public class KeybindSetting extends Setting<Integer> {
         KEY_MAP.put("numpadmultiply", GLFW.GLFW_KEY_KP_MULTIPLY);
         KEY_MAP.put("numpaddivide", GLFW.GLFW_KEY_KP_DIVIDE);
         KEY_MAP.put("backslash", GLFW.GLFW_KEY_BACKSLASH);
-        KEY_MAP.put("none", GLFW.GLFW_PLATFORM_NULL);
+        KEY_MAP.put("none", GLFW.GLFW_KEY_UNKNOWN);
     }
 
     public KeybindSetting(String name, String defaultValue, String description) {
