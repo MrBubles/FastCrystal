@@ -73,7 +73,6 @@ public class KeybindBox implements FastCrystalGuiObj {
 
                 mc.textRenderer.drawWithShadow(matrices, "Press any key", x + boxWidth + padding, y + boxHeight / 2f - mc.textRenderer.fontHeight / 2f, -1);
 
-
                 for (int i = GLFW.GLFW_KEY_SPACE; i <= GLFW.GLFW_KEY_LAST; i++) {
                     if (GLFW.glfwGetKey(mc.getWindow().getHandle(), i) == GLFW.GLFW_PRESS) {
                         if (i == GLFW.GLFW_KEY_ESCAPE) {

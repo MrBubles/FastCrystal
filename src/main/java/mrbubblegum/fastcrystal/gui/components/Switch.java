@@ -43,10 +43,8 @@ public class Switch implements FastCrystalGuiObj {
 
             mc.textRenderer.drawWithShadow(matrices, setting.getName(), x - mc.textRenderer.getWidth(setting.getName()) - padding, y + height / 2f - mc.textRenderer.fontHeight / 2f, -1);
 
-
             fill(matrices, x - 1, y - 1, x + width + 1, y + height + 1, -0x33333334);
             fill(matrices, x, y, x + width, y + height, -0x78EFEFF0);
-
 
             if (setting.getValue()) {
                 fill(matrices, x + width - height - 1, y - 1, x + width + 1, y + height + 1, -0x33333334);
@@ -55,7 +53,6 @@ public class Switch implements FastCrystalGuiObj {
                 fill(matrices, x - 1, y - 1, x + height + 1, y + height + 1, -0x33333334);
                 fill(matrices, x, y, x + height, y + height, -1);
             }
-
 
             mc.textRenderer.drawWithShadow(matrices, setting.getValue().toString(), x + width + padding, y + height / 2f - mc.textRenderer.fontHeight / 2f, -1);
 
