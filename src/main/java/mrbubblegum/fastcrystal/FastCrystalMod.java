@@ -308,9 +308,8 @@ public class FastCrystalMod implements ClientModInitializer {
         mc = MinecraftClient.getInstance();
         mc.execute(() -> {
 
-            new SaveConfig();
-            Runtime.getRuntime().addShutdownHook(new Thread(SaveConfig::saveAllSettings));
             new LoadConfig();
+            Runtime.getRuntime().addShutdownHook(new Thread(SaveConfig::saveAllSettings));
 
             if (!openedGui.getValue())
                 displayMessage("The fastcrystal gui bind is " + guiBind.getStringValue(), "");
@@ -321,6 +320,8 @@ public class FastCrystalMod implements ClientModInitializer {
                 displayMessage("MarlowCrystalOptimizer is not needed for FastCrystal, please disable it", "Warning!");
             if (isModLoaded("crystaloptimizer", "CrystalOptimizer"))
                 displayMessage("CrystalOptimizer is not needed for FastCrystal, please disable it", "Warning!");
+
+            new SaveConfig();
         });
     }
 }

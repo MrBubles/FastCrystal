@@ -20,15 +20,15 @@ public class KeybindBox implements FastCrystalGuiObj {
     private boolean listening;
     private int keybind;
 
-    public KeybindBox(KeybindSetting setting, int x, int y, int height) {
+    public KeybindBox(KeybindSetting setting, int x, int y, int boxHeight) {
         this.setting = setting;
         this.x = x;
         this.y = y;
         listening = false;
         keybind = setting.getValue();
-        this.padding = height / 4;
-        this.boxWidth = height * 2;
-        this.boxHeight = height;
+        this.padding = boxHeight / 4;
+        this.boxWidth = boxHeight * 2;
+        this.boxHeight = boxHeight;
     }
 
     public static String keyToString(int key) {
