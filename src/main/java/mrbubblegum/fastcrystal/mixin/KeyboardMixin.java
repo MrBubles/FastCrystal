@@ -19,7 +19,8 @@ public class KeyboardMixin {
         mc.execute(() -> {
             if (mc.world != null && mc.player != null && mc.currentScreen == null && windowHandle == mc.getWindow().getHandle() && action == GLFW.GLFW_PRESS && keyCode == FastCrystalMod.guiBind.getValue()) {
                 mc.setScreen(new FastCrystalScreen());
-                FastCrystalMod.openedGui.setValue(true);
+                if (!FastCrystalMod.openedGui.getValue())
+                    FastCrystalMod.openedGui.setValue(true);
             }
         });
     }

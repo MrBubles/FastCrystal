@@ -1,7 +1,6 @@
 package mrbubblegum.fastcrystal.mixin;
 
 import mrbubblegum.fastcrystal.FastCrystalMod;
-import net.minecraft.block.Blocks;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
@@ -40,46 +39,22 @@ public class MinecraftClientMixin {
 
     @Inject(method = "tick", at = @At("HEAD"))
     private void tick(CallbackInfo info) {
-        if (mc == null || mc.player == null | mc.world == null)
-            return;
+        mc.execute(() -> {
+            if (mc == null || mc.player == null | mc.world == null)
+                return;
 
 //        if (itemUseCooldown != FastCrystalMod.itemUseCooldown)
 //            itemUseCooldown = FastCrystalMod.itemUseCooldown;
 //        if (attackCooldown != FastCrystalMod.attackCooldown)
 //            attackCooldown = FastCrystalMod.attackCooldown;
-//
-        if (!FastCrystalMod.fastCrystal.getValue() | !FastCrystalMod.instantPlace.getValue())
-            return;
 
-        BlockHitResult hit = FastCrystalMod.getLookedAtBlockHitResult();
-        if (hit == null || mc.interactionManager == null || mc.currentScreen != null || !mc.options.useKey.isPressed() || !mc.player.getMainHandStack().isOf(Items.END_CRYSTAL) || !(Objects.equals(FastCrystalMod.getLookedAtBlock(), Blocks.OBSIDIAN) | Objects.equals(FastCrystalMod.getLookedAtBlock(), Blocks.BEDROCK)))
-            return;
-
-        BlockPos pos = hit.getBlockPos();
-        if (pos == null || FastCrystalMod.isLookingAtOrCloseToCrystal(pos, mc.world) || !FastCrystalMod.canPlaceCrystal(pos))
-            return;
-
-        ActionResult interactBlock = mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, hit);
-        if (interactBlock.isAccepted() && interactBlock.shouldSwingHand())
-            mc.player.swingHand(Hand.MAIN_HAND);
-//    }
-//
-//    @Inject(method = "doItemUse", at = @At("HEAD"))
-//    private void itemUse(CallbackInfo ci) {
-//        if (mc == null || mc.player == null | mc.world == null)
-//            return;
-//
-//        if (FastCrystalMod.fastUse.getValue() && mc.player.getMainHandStack().isOf(Items.END_CRYSTAL) && Objects.equals(FastCrystalMod.getLookedAtBlock(), Blocks.OBSIDIAN) | Objects.equals(FastCrystalMod.getLookedAtBlock(), Blocks.BEDROCK))
-//            itemUseCooldown = 0;
-//
-//        if (FastCrystalMod.fastAttack.getValue() && mc.player.getMainHandStack().getItem() instanceof EndCrystalItem crystalItem) {
-//            attackCooldown = 0;
-//            mc.player.getItemCooldownManager().set(crystalItem, 0);
-//            ((LivingEntityInterface) mc.player).setLastAttackedTicks(69);
-//            if (((HeldItemRendererInterface) mc.gameRenderer.firstPersonRenderer).getPrevEquipProgressMainHand() >= 0.9) {
-//                ((HeldItemRendererInterface) mc.gameRenderer.firstPersonRenderer).setEquipProgressMainHand(1.0f);
-//                ((HeldItemRendererInterface) mc.gameRenderer.firstPersonRenderer).setMainhandStack(mc.player.getMainHandStack());
-//            }
-//        }
+            BlockHitResult hit = FastCrystalMod.getLookedAtBlockHitResult();
+            BlockPos pos = Objects.requireNonNull(hit).getBlockPos();
+            if (FastCrystalMod.fastCrystal.getValue() && FastCrystalMod.instantPlace.getValue() && mc.interactionManager != null && pos != null && mc.options.useKey.isPressed() && mc.currentScreen == null && FastCrystalMod.canPlaceCrystal(pos)) {
+                ActionResult interactBlock = mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, hit);
+                if (interactBlock.isAccepted() && interactBlock.shouldSwingHand())
+                    mc.player.swingHand(Hand.MAIN_HAND);
+            }
+        });
     }
 }

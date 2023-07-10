@@ -18,6 +18,7 @@ public class ClientWorldMixin {
         mc.execute(() -> {
             if (mc.world != null)
                 RenderUtil.renderedEntities.remove(mc.world.getEntityById(entityId));
+            RenderUtil.unrenderedEntities.add(mc.world.getEntityById(entityId));
         });
     }
 }

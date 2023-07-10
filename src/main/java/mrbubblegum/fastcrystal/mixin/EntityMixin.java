@@ -16,12 +16,18 @@ public class EntityMixin {
 
     @Inject(at = @At("HEAD"), method = "remove")
     private void onRemove(CallbackInfo ci) {
-        mc.execute(() -> RenderUtil.renderedEntities.remove((Entity) (Object) this));
+        mc.execute(() -> {
+            RenderUtil.renderedEntities.remove((Entity) (Object) this);
+            RenderUtil.unrenderedEntities.add((Entity) (Object) this);
+        });
     }
 
     @Inject(at = @At("HEAD"), method = "kill")
     private void onKill(CallbackInfo ci) {
-        mc.execute(() -> RenderUtil.renderedEntities.remove((Entity) (Object) this));
+        mc.execute(() -> {
+            RenderUtil.renderedEntities.remove((Entity) (Object) this);
+            RenderUtil.unrenderedEntities.add((Entity) (Object) this);
+        });
     }
 
     @Inject(at = @At("HEAD"), method = "tick")
