@@ -189,7 +189,9 @@ public class FastCrystalMod implements ClientModInitializer {
     }
 
     public static boolean canPlaceCrystal(BlockPos block) {
-        if (mc.world != null) {
+        if (mc.world != null && mc.player != null) {
+            if (!mc.player.getMainHandStack().isOf(Items.END_CRYSTAL))
+                return false;
             BlockState blockState = mc.world.getBlockState(block);
             if (!blockState.isOf(Blocks.OBSIDIAN) && !blockState.isOf(Blocks.BEDROCK))
                 return false;
