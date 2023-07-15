@@ -28,7 +28,6 @@ import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.*;
 import net.minecraft.world.RaycastContext;
-import net.minecraft.world.World;
 
 import javax.swing.*;
 import java.awt.*;
@@ -207,16 +206,16 @@ public class FastCrystalMod implements ClientModInitializer {
         return false;
     }
 
-    public static Block getLookedAtBlock() {
-        BlockHitResult hit = getLookedAtBlockHitResult();
-        if (mc.world != null && mc.player != null && hit != null) {
-            Block block = mc.world.getBlockState(hit.getBlockPos()).getBlock();
-            if (block != Blocks.AIR) {
-                return block;
-            }
-        }
-        return null;
-    }
+//    public static Block getLookedAtBlock() {
+//        BlockHitResult hit = getLookedAtBlockHitResult();
+//        if (mc.world != null && mc.player != null && hit != null) {
+//            Block block = mc.world.getBlockState(hit.getBlockPos()).getBlock();
+//            if (block != Blocks.AIR) {
+//                return block;
+//            }
+//        }
+//        return null;
+//    }
 
 //    public static BlockPos getLookedAtBlockPos() {
 //        BlockHitResult hit = getLookedAtBlockHitResult();
@@ -226,11 +225,11 @@ public class FastCrystalMod implements ClientModInitializer {
 //        return null;
 //    }
 
-    public static boolean isCloseToCrystal(BlockPos pos, World world) {
-        return world.getEntitiesByClass(Entity.class, new Box(pos.getX(), pos.getY(), pos.getZ(), pos.getX() + 1, pos.getY() + 2, pos.getZ() + 1), FastCrystalMod::isEntityExisting)
-                .parallelStream()
-                .anyMatch(FastCrystalMod::isCrystal);
-    }
+//    public static boolean isCloseToCrystal(BlockPos pos, World world) {
+//        return world.getEntitiesByClass(Entity.class, new Box(pos.getX(), pos.getY(), pos.getZ(), pos.getX() + 1, pos.getY() + 2, pos.getZ() + 1), FastCrystalMod::isEntityExisting)
+//                .parallelStream()
+//                .anyMatch(FastCrystalMod::isCrystal);
+//    }
 //
 //    public static EndCrystalEntity getBlockPosCrystal(BlockPos pos, World world) {
 //        List<EndCrystalEntity> list = world.getEntitiesByType(EntityType.END_CRYSTAL, new Box(pos.getX(), pos.getY(), pos.getZ(), pos.getX() + 1, pos.getY() + 2, pos.getZ() + 1), FastCrystalMod::isEntityExisting);
@@ -257,17 +256,17 @@ public class FastCrystalMod implements ClientModInitializer {
         return entity.isAlive() && isEntityInWorld(entity) && RenderUtil.isEntityRendered(entity);
     }
 
-    public static boolean isLookingAtOrCloseToCrystal(BlockPos pos, World world) {
-        return isLookingAtCrystal() | isCloseToCrystal(pos, world);
-    }
+//    public static boolean isLookingAtOrCloseToCrystal(BlockPos pos, World world) {
+//        return isLookingAtCrystal() | isCloseToCrystal(pos, world);
+//    }
 
-    public static void execute(Runnable runnable) {
-        Thread thread = new Thread(runnable);
-        thread.start();
-    }
+//    public static void execute(Runnable runnable) {
+//        Thread thread = new Thread(runnable);
+//        thread.start();
+//    }
 
     public static void displayMessage(String message, String title) {
-        execute(() -> {
+        mc.execute(() -> {
             try {
                 UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
             } catch (Exception ignored) {
