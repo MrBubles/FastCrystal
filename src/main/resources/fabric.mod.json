@@ -2,23 +2,24 @@
   "schemaVersion": 1,
   "id": "fastcrystal",
   "version": "${version}",
-  "name": "Fast Crystal",
+  "name": "FastCrystal",
   "description": "Makes crystals faster.",
   "authors": [
-    "MrBubblegum",
-    "hockeyl8"
+    "MrBubbles"
   ],
-  "contact": {
-    "homepage": "https://github.com/MrBubblegum"
-  },
+  "license": "CC0-1.0",
   "icon": "assets/fastcrystal/icon.png",
   "environment": "client",
   "entrypoints": {
     "client": [
-      "mrbubblegum.fastcrystal.FastCrystalMod"
+      "me.mrbubbles.fastcrystal.FastCrystal"
     ]
   },
   "mixins": [
     "fastcrystal.mixins.json"
-  ]
+  ],
+  "depends": {
+    "java": ">=17",
+    "fabric-api": "*"
+  }
 }
