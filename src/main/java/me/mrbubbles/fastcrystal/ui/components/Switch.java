@@ -31,15 +31,11 @@ public class Switch implements FastCrystalGuiObj {
 
     @Override
     public void mouseClicked(double mx, double my) {
-        mc.execute(() -> {
             setting.setValue(!setting.getValue());
-        });
     }
 
     @Override
     public void render(MatrixStack matrices, int mouseX, int mouseY) {
-
-        mc.execute(() -> {
 
             mc.textRenderer.drawWithShadow(matrices, setting.getName(), x - mc.textRenderer.getWidth(setting.getName()) - padding, y + height / 2f - mc.textRenderer.fontHeight / 2f, -1);
 
@@ -56,13 +52,12 @@ public class Switch implements FastCrystalGuiObj {
 
             mc.textRenderer.drawWithShadow(matrices, setting.getValue().toString(), x + width + padding, y + height / 2f - mc.textRenderer.fontHeight / 2f, -1);
 
-            if (isWithin(mouseX, mouseY)) {
-                matrices.translate(0.0f, 0.0f, 1.0f);
-                fill(matrices, mouseX + 5, mouseY - 1, mouseX + 6 + mc.textRenderer.getWidth(setting.getDescription()), mouseY + 9, 0xEF000000);
-                mc.textRenderer.drawWithShadow(matrices, setting.getDescription(), mouseX + 6, mouseY, -1);
-                matrices.translate(0.0f, 0.0f, -1.0f);
-            }
-        });
+        if (isWithin(mouseX, mouseY)) {
+            matrices.translate(0.0f, 0.0f, 1.0f);
+            fill(matrices, mouseX + 5, mouseY - 1, mouseX + 6 + mc.textRenderer.getWidth(setting.getDescription()), mouseY + 9, 0xEF000000);
+            mc.textRenderer.drawWithShadow(matrices, setting.getDescription(), mouseX + 6, mouseY, -1);
+            matrices.translate(0.0f, 0.0f, -1.0f);
+        }
     }
 
     @Override

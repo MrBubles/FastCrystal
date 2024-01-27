@@ -36,11 +36,9 @@ public class KeybindBox implements FastCrystalGuiObj {
 
     @Override
     public void mouseClicked(double mx, double my) {
-        mc.execute(() -> {
-            if (isWithin(mx, my)) {
-                listening = true;
-            }
-        });
+        if (isWithin(mx, my)) {
+            listening = true;
+        }
     }
 
     private String getKeyName(int key) {
@@ -53,8 +51,6 @@ public class KeybindBox implements FastCrystalGuiObj {
 
     @Override
     public void render(MatrixStack matrices, int mouseX, int mouseY) {
-
-        mc.execute(() -> {
 
             mc.textRenderer.drawWithShadow(matrices, setting.getName(), x - mc.textRenderer.getWidth(setting.getName()) - padding, y + boxHeight / 2f - mc.textRenderer.fontHeight / 2f, -1);
 
@@ -95,7 +91,6 @@ public class KeybindBox implements FastCrystalGuiObj {
                     matrices.translate(0.0f, 0.0f, -1.0f);
                 }
             }
-        });
     }
 
     @Override
