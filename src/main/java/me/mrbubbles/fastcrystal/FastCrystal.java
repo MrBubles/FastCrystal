@@ -92,7 +92,7 @@ public class FastCrystal implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
-        System.setProperty("java.awt.headless", "false"); // I don't know why i added this
+        System.setProperty("java.awt.headless", "false");
 
         LoadConfig.loadConfig(CONFIG_FILE);
         Runtime.getRuntime().addShutdownHook(new Thread(() -> SaveConfig.saveConfig(CONFIG_FILE)));
