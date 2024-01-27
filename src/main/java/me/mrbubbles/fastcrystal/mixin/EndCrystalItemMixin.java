@@ -13,6 +13,6 @@ public class EndCrystalItemMixin {
     @Redirect(method = "useOnBlock", at = @At(value = "INVOKE", target = "Lnet/minecraft/item/ItemStack;decrement(I)V"))
     private void fixDecrement(ItemStack stack, int amount, ItemUsageContext context) {
         if (!context.getWorld().isClient)
-            stack.decrement(1);
+            stack.decrement(amount);
     }
 }
