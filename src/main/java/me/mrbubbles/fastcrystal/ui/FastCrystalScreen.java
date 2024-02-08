@@ -7,14 +7,16 @@ import me.mrbubbles.fastcrystal.settings.Setting;
 import me.mrbubbles.fastcrystal.ui.components.FastCrystalGuiObj;
 import me.mrbubbles.fastcrystal.ui.components.KeybindBox;
 import me.mrbubbles.fastcrystal.ui.components.Switch;
+import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.text.Text;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
 
 public class FastCrystalScreen extends Screen {
+
+    public static final FastCrystalScreen UI = new FastCrystalScreen();
 
     private final Set<FastCrystalGuiObj> objs = new LinkedHashSet<>();
 
@@ -37,9 +39,9 @@ public class FastCrystalScreen extends Screen {
     }
 
     @Override
-    public void render(MatrixStack matrices, int mouseX, int mouseY, float partialTicks) {
-        renderBackground(matrices);
-        for (FastCrystalGuiObj obj : objs) obj.render(matrices, mouseX, mouseY);
+    public void render(DrawContext context, int mouseX, int mouseY, float partialTicks) {
+        renderBackground(context);
+        for (FastCrystalGuiObj obj : objs) obj.render(context, mouseX, mouseY);
 
         if (!FastCrystal.openedUI) FastCrystal.openedUI = true;
     }

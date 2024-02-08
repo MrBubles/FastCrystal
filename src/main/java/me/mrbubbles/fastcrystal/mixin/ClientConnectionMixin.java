@@ -2,8 +2,8 @@ package me.mrbubbles.fastcrystal.mixin;
 
 import me.mrbubbles.fastcrystal.FastCrystal;
 import net.minecraft.network.ClientConnection;
-import net.minecraft.network.Packet;
 import net.minecraft.network.listener.PacketListener;
+import net.minecraft.network.packet.Packet;
 import net.minecraft.network.packet.s2c.play.ItemPickupAnimationS2CPacket;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;

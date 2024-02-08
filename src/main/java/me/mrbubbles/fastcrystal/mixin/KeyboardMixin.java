@@ -18,10 +18,7 @@ public class KeyboardMixin {
     private void onKey(long windowHandle, int keyCode, int scanCode, int action, int modifiers, CallbackInfo ci) {
         if (mc.world == null || mc.player == null || mc.currentScreen != null || windowHandle != mc.getWindow().getHandle() || action != GLFW.GLFW_PRESS || keyCode != FastCrystal.uiBind.getValue())
             return;
-        if (mc.getGameVersion().contains("1.20")) {
-            FastCrystal.displayMessage("FastCrystal UI isn't compatible with 1.20!", "Incompatible");
-            return;
-        }
-        mc.setScreen(new FastCrystalScreen());
+
+        mc.setScreen(FastCrystalScreen.UI);
     }
 }

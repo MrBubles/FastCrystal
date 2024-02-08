@@ -7,7 +7,6 @@
   "authors": [
     "MrBubbles"
   ],
-  "license": "CC0-1.0",
   "icon": "assets/fastcrystal/icon.png",
   "environment": "client",
   "entrypoints": {
