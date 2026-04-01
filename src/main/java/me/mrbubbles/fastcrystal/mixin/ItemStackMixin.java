@@ -11,8 +11,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public class ItemStackMixin {
 
     @Inject(method = "getBobbingAnimationTime", at = @At("HEAD"), cancellable = true)
-    private void stopBobbingAnimation(CallbackInfoReturnable<Integer> info) {
-        if (FastCrystal.fastCrystal.getValue())
-            info.setReturnValue(0);
+    private void getBobbingAnimationTime(CallbackInfoReturnable<Integer> ci) {
+        if (FastCrystal.isEnabled()) ci.setReturnValue(0);
     }
 }

@@ -7,10 +7,12 @@
   "authors": [
     "MrBubbles"
   ],
-  "icon": "assets/fastcrystal/icon.png",
   "environment": "client",
   "entrypoints": {
     "client": [
+      "me.mrbubbles.fastcrystal.FastCrystal"
+    ],
+    "server": [
       "me.mrbubbles.fastcrystal.FastCrystal"
     ]
   },
@@ -18,7 +20,6 @@
     "fastcrystal.mixins.json"
   ],
   "depends": {
-    "java": ">=17",
     "fabric-api": "*"
   }
 }

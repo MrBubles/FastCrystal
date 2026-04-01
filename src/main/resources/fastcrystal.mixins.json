@@ -3,17 +3,12 @@
   "package": "me.mrbubbles.fastcrystal.mixin",
   "compatibilityLevel": "JAVA_17",
   "mixins": [
-    "ClientConnectionMixin",
     "EndCrystalItemMixin",
-    "EntityMixin",
     "ItemStackMixin",
-    "LivingEntityInterface"
+    "PlayerInventoryInterface"
   ],
   "client": [
     "ClientPlayerInteractionManagerInterface",
-    "HeldItemRendererInterface",
-    "KeyboardMixin",
-    "MinecraftClientInterface",
     "MinecraftClientMixin"
   ],
   "injectors": {

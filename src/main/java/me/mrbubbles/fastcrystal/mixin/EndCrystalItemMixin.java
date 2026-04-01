@@ -1,5 +1,6 @@
 package me.mrbubbles.fastcrystal.mixin;
 
+import me.mrbubbles.fastcrystal.FastCrystal;
 import net.minecraft.item.EndCrystalItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemUsageContext;
@@ -11,8 +12,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 public class EndCrystalItemMixin {
 
     @Redirect(method = "useOnBlock", at = @At(value = "INVOKE", target = "Lnet/minecraft/item/ItemStack;decrement(I)V"))
-    private void fixDecrement(ItemStack stack, int amount, ItemUsageContext context) {
-        if (!context.getWorld().isClient)
-            stack.decrement(amount);
+    private void useOnBlock(ItemStack stack, int amount, ItemUsageContext context) {
+        if (FastCrystal.isEnabled() && !context.getWorld().isClient()) stack.decrement(amount);
     }
 }

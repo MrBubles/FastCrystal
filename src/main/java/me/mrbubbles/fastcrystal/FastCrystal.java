@@ -1,24 +1,35 @@
 package me.mrbubbles.fastcrystal;
 
-import me.mrbubbles.fastcrystal.config.LoadConfig;
-import me.mrbubbles.fastcrystal.config.SaveConfig;
+import com.google.common.util.concurrent.AtomicDouble;
 import me.mrbubbles.fastcrystal.mixin.ClientPlayerInteractionManagerInterface;
-import me.mrbubbles.fastcrystal.settings.BooleanSetting;
-import me.mrbubbles.fastcrystal.settings.KeybindSetting;
+import me.mrbubbles.fastcrystal.mixin.PlayerInventoryInterface;
 import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.loader.api.FabricLoader;
+import net.fabricmc.api.DedicatedServerModInitializer;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.component.type.AttributeModifierSlot;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
+import net.minecraft.entity.attribute.EntityAttributes;
+import net.minecraft.entity.effect.StatusEffectInstance;
+import net.minecraft.entity.effect.StatusEffects;
+import net.minecraft.entity.projectile.ProjectileUtil;
+import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
-import net.minecraft.item.ToolItem;
 import net.minecraft.network.packet.Packet;
 import net.minecraft.network.packet.c2s.play.HandSwingC2SPacket;
 import net.minecraft.network.packet.c2s.play.PlayerInteractBlockC2SPacket;
 import net.minecraft.network.packet.c2s.play.PlayerInteractEntityC2SPacket;
 import net.minecraft.network.packet.c2s.play.UpdateSelectedSlotC2SPacket;
+import net.minecraft.predicate.entity.EntityPredicates;
+import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
@@ -27,42 +38,58 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.RaycastContext;
-import org.lwjgl.glfw.GLFW;
 
-import java.nio.file.Path;
+public class FastCrystal implements ClientModInitializer, DedicatedServerModInitializer {
 
-public class FastCrystal implements ClientModInitializer {
-
-    public static final BooleanSetting fastCrystal = new BooleanSetting("FastCrystal", true, "The entire mod");
-    public static final BooleanSetting removeCrystal = new BooleanSetting("RemoveCrystal", true, "Removes the crystal you hit (marlow's crystal optimizer)");
-    public static final BooleanSetting fastAttack = new BooleanSetting("FastAttack", true, "Makes it so whenever you hold a crystal you attack like you're in 1.7");
-    public static final BooleanSetting noPickupAnim = new BooleanSetting("NoPickupAnim", false, "Disables the pickup item packet");
-    public static final BooleanSetting instantPlace = new BooleanSetting("InstantPlace", false, "Makes you instant place crystals");
-    public static final KeybindSetting uiBind = new KeybindSetting("UIBind", GLFW.GLFW_KEY_BACKSLASH, "The FastCrystal ui bind");
     public static final MinecraftClient mc = MinecraftClient.getInstance();
-    public static final Path CONFIG_FILE = FabricLoader.getInstance().getConfigDir().resolve("fastcrystal.json");
-    public static boolean openedUI = false;
+
+    private static boolean serverDisabled = false;
+
+    public static boolean isEnabled() {
+        return !serverDisabled;
+    }
 
     public static BlockHitResult getLookedAtBlockHit() {
         if (mc.world == null || mc.player == null) return null;
-        Vec3d camPos = mc.player.getEyePos();
-        Vec3d rotationVec = mc.player.getRotationVecClient();
-        return mc.world.raycast(new RaycastContext(camPos, camPos.add(rotationVec.multiply(4.5)), RaycastContext.ShapeType.OUTLINE, RaycastContext.FluidHandling.NONE, mc.player));
+
+        Entity camera = mc.getCameraEntity();
+        if (camera == null) return null;
+
+        Vec3d camPos = camera.getCameraPosVec(0f);
+        Vec3d rotationVec = camera.getRotationVec(0f);
+
+        return mc.world.raycast(new RaycastContext(camPos, camPos.add(rotationVec.multiply(mc.player.getBlockInteractionRange())), RaycastContext.ShapeType.OUTLINE, RaycastContext.FluidHandling.NONE, camera));
     }
 
     public static boolean isCrystal(Entity entity) {
         if (mc.player == null || mc.world == null || entity == null || entity.isRemoved()) return false;
 
-        if (mc.player.getMainHandStack().getItem() instanceof ToolItem || mc.player.getOffHandStack().getItem() instanceof ToolItem)
+        if (mc.player.getMainHandStack().getComponents().contains(DataComponentTypes.TOOL) || mc.player.getOffHandStack().getComponents().contains(DataComponentTypes.TOOL))
             return entity.getType().equals(EntityType.END_CRYSTAL);
 
         return entity.getType().equals(EntityType.END_CRYSTAL) || entity.getType().equals(EntityType.SLIME) || entity.getType().equals(EntityType.MAGMA_CUBE);
     }
 
+    public static EntityHitResult getLookedAtEntityHit() {
+        if (mc.world == null || mc.player == null) return null;
+
+        Entity camera = mc.getCameraEntity();
+        if (camera == null) return null;
+
+        double range = mc.player.getEntityInteractionRange();
+
+        Vec3d camPos = camera.getCameraPosVec(0f);
+        Vec3d lookVec = camera.getRotationVec(0f);
+        Vec3d endPos = camPos.add(lookVec.multiply(range));
+
+        Box box = camera.getBoundingBox().stretch(lookVec.multiply(range)).expand(1.0, 1.0, 1.0);
+
+        return ProjectileUtil.raycast(camera, camPos, endPos, box, EntityPredicates.EXCEPT_SPECTATOR.and(Entity::canHit), range * range);
+    }
+
     public static Entity getLookedAtCrystal() {
-        if (fastCrystal.getValue() && mc.crosshairTarget instanceof EntityHitResult entityHit && isCrystal(entityHit.getEntity())) {
-            return entityHit.getEntity();
-        }
+        EntityHitResult entityHit = getLookedAtEntityHit();
+        if (entityHit != null && isCrystal(entityHit.getEntity())) return entityHit.getEntity();
         return null;
     }
 
@@ -75,10 +102,39 @@ public class FastCrystal implements ClientModInitializer {
         if (!mc.player.getStackInHand(hand).isOf(Items.END_CRYSTAL) || (!state.isOf(Blocks.OBSIDIAN) && !state.isOf(Blocks.BEDROCK)))
             return false;
 
-        if (!mc.world.isAir(crystalPos))
-            return false;
+        if (!mc.world.isAir(crystalPos)) return false;
 
         return mc.world.getOtherEntities(null, new Box(crystalPos.getX(), crystalPos.getY(), crystalPos.getZ(), crystalPos.getX() + 1.0, crystalPos.getY() + 2.0, crystalPos.getZ() + 1.0)).isEmpty();
+    }
+
+    public static boolean canBreakCrystal() {
+        StatusEffectInstance weakness = mc.player.getStatusEffect(StatusEffects.WEAKNESS);
+        if (weakness == null) return true;
+
+        if (mc.player.getAttributeValue(EntityAttributes.ATTACK_DAMAGE) > 4.0 * (weakness.getAmplifier() + 1.0) + 5.0)
+            return true;
+
+        return calculateDamage() > 0.0;
+    }
+
+    private static double calculateDamage() {
+        StatusEffectInstance strength = mc.player.getStatusEffect(StatusEffects.STRENGTH);
+        double strengthBonus = (strength != null) ? 3.0 * (strength.getAmplifier() + 1) : 0.0;
+
+        StatusEffectInstance weakness = mc.player.getStatusEffect(StatusEffects.WEAKNESS);
+        double weaknessPenalty = (weakness != null) ? 4.0 * (weakness.getAmplifier() + 1) : 0.0;
+
+        return Math.max(0.0, mc.player.getAttributeValue(EntityAttributes.ATTACK_DAMAGE) + getWeaponDamage(mc.player.getMainHandStack()) + strengthBonus - weaknessPenalty);
+    }
+
+    private static double getWeaponDamage(ItemStack item) {
+        if (item.isEmpty()) return 0.0D;
+
+        AtomicDouble damage = new AtomicDouble();
+        item.applyAttributeModifier(AttributeModifierSlot.MAINHAND, (attribute, modifier) -> {
+            if (attribute.equals(EntityAttributes.ATTACK_DAMAGE)) damage.addAndGet(modifier.value());
+        });
+        return damage.get();
     }
 
     public static void sendPacket(Packet<?> packet) {
@@ -90,7 +146,7 @@ public class FastCrystal implements ClientModInitializer {
         if (mc.player == null || mc.getNetworkHandler() == null || mc.interactionManager == null) return;
 
         ClientPlayerInteractionManagerInterface interactionManager = ((ClientPlayerInteractionManagerInterface) mc.interactionManager);
-        int i = mc.player.getInventory().selectedSlot;
+        int i = ((PlayerInventoryInterface) mc.player.getInventory()).getSelectedSlot();
         if (i != interactionManager.getLastSelectedSlot()) {
             interactionManager.setLastSelectedSlot(i);
             mc.getNetworkHandler().sendPacket(new UpdateSelectedSlotC2SPacket(interactionManager.getLastSelectedSlot()));
@@ -103,11 +159,10 @@ public class FastCrystal implements ClientModInitializer {
         if (serverSided) {
             syncSelectedSlot();
             sendPacket(new PlayerInteractBlockC2SPacket(hand, blockHit, 0));
-            sendPacket(new HandSwingC2SPacket(Hand.MAIN_HAND));
+            mc.player.swingHand(hand);
         } else {
             ActionResult result = mc.interactionManager.interactBlock(mc.player, hand, blockHit);
-            if (result.isAccepted() && result.shouldSwingHand())
-                mc.player.swingHand(hand);
+            if (result.isAccepted()) mc.player.swingHand(hand);
         }
     }
 
@@ -126,9 +181,18 @@ public class FastCrystal implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
-        System.setProperty("java.awt.headless", "false");
+        PayloadTypeRegistry.playS2C().register(DisableFastCrystalPayload.ID, DisableFastCrystalPayload.CODEC);
+        ClientPlayNetworking.registerGlobalReceiver(DisableFastCrystalPayload.ID, (payload, context) -> context.client().execute(() -> {
+            serverDisabled = true;
+            mc.inGameHud.getChatHud().addMessage(Text.literal("[FastCrystal] FastCrystal has been disabled on this server."));
+        }));
 
-        LoadConfig.loadConfig(CONFIG_FILE);
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> SaveConfig.saveConfig(CONFIG_FILE)));
+        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> serverDisabled = false);
+    }
+
+    @Override
+    public void onInitializeServer() {
+        PayloadTypeRegistry.playS2C().register(DisableFastCrystalPayload.ID, DisableFastCrystalPayload.CODEC);
+        ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> ServerPlayNetworking.send(handler.player, DisableFastCrystalPayload.INSTANCE));
     }
 }
