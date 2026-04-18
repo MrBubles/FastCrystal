@@ -4,12 +4,9 @@ import com.google.common.util.concurrent.AtomicDouble;
 import me.mrbubbles.fastcrystal.mixin.ClientPlayerInteractionManagerInterface;
 import me.mrbubbles.fastcrystal.mixin.PlayerInventoryInterface;
 import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.api.DedicatedServerModInitializer;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.client.MinecraftClient;
@@ -39,7 +36,7 @@ import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.RaycastContext;
 
-public class FastCrystal implements ClientModInitializer, DedicatedServerModInitializer {
+public class FastCrystal implements ClientModInitializer {
 
     public static final MinecraftClient mc = MinecraftClient.getInstance();
 
@@ -188,11 +185,5 @@ public class FastCrystal implements ClientModInitializer, DedicatedServerModInit
         }));
 
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> serverDisabled = false);
-    }
-
-    @Override
-    public void onInitializeServer() {
-        PayloadTypeRegistry.playS2C().register(DisableFastCrystalPayload.ID, DisableFastCrystalPayload.CODEC);
-        ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> ServerPlayNetworking.send(handler.player, DisableFastCrystalPayload.INSTANCE));
     }
 }

@@ -61,22 +61,3 @@ public void onPlayerJoin(PlayerJoinEvent event) {
     if (player.getListeningPluginChannels().contains(CHANNEL)) player.sendPluginMessage(this, CHANNEL, new byte[0]);
 }
 ```
-
-##### PacketEvents
-
-```java
-private static final String CHANNEL = "clientcrystal:disable_fast_crystal";
-
-@Override
-public void onPacketReceive(PacketPlayReceiveEvent event) {
-    if (event.getPacketType() == PacketType.Play.Client.PLUGIN_MESSAGE) {
-        WrapperPlayClientPluginMessage packet = new WrapperPlayClientPluginMessage(event);
-        if (packet.getChannel().equals("minecraft:register")) {
-            for (String channel : new String(packet.getData()).split("\0")) {
-                if (CHANNEL.equals(channel))
-                    event.getPlayer().sendPacket(new WrapperPlayServerPluginMessage(CHANNEL, new byte[0]));
-            }
-        }
-    }
-}
-```

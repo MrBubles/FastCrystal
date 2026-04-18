@@ -13,7 +13,7 @@
       "me.mrbubbles.fastcrystal.FastCrystal"
     ],
     "server": [
-      "me.mrbubbles.fastcrystal.FastCrystal"
+      "me.mrbubbles.fastcrystal.ServerFastCrystal"
     ]
   },
   "mixins": [
