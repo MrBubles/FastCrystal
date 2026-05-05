@@ -61,6 +61,12 @@ public class FastCrystal implements ClientModInitializer {
     public static boolean isCrystal(Entity entity) {
         if (mc.player == null || mc.world == null || entity == null || entity.isRemoved()) return false;
 
+        BlockPos pos = BlockPos.ofFloored(entity.getPos().add(-0.5, -1.0, -0.5));
+
+        BlockState state = mc.world.getBlockState(pos);
+
+        if (!state.isOf(Blocks.OBSIDIAN) && !state.isOf(Blocks.BEDROCK)) return false;
+
         if (mc.player.getMainHandStack().getComponents().contains(DataComponentTypes.TOOL) || mc.player.getOffHandStack().getComponents().contains(DataComponentTypes.TOOL))
             return entity.getType().equals(EntityType.END_CRYSTAL);
 

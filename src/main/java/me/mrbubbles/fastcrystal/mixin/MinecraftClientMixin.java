@@ -36,6 +36,9 @@ public abstract class MinecraftClientMixin {
     @Shadow
     public int attackCooldown;
 
+    @Shadow
+    private int itemUseCooldown;
+
     @Inject(at = @At("HEAD"), method = "doItemUse")
     private void itemUse(CallbackInfo ci) {
         if (!FastCrystal.isEnabled() || interactionManager.isBreakingBlock() || player.isRiding()) return;
@@ -43,8 +46,10 @@ public abstract class MinecraftClientMixin {
         for (Hand hand : Hand.values()) {
             if (!player.getStackInHand(hand).isItemEnabled(world.getEnabledFeatures())) continue;
             BlockHitResult blockHit = FastCrystal.getLookedAtBlockHit();
-            if (blockHit != null && FastCrystal.canPlaceCrystal(blockHit.getBlockPos(), hand) && options.useKey.isPressed() && !options.attackKey.isPressed())
+            if (blockHit != null && FastCrystal.canPlaceCrystal(blockHit.getBlockPos(), hand) && options.useKey.isPressed() && !options.attackKey.isPressed()) {
                 FastCrystal.doInteractBlock(hand, blockHit, true);
+                itemUseCooldown = 0;
+            }
         }
     }
 
@@ -56,12 +61,12 @@ public abstract class MinecraftClientMixin {
         Entity crystal = FastCrystal.getLookedAtCrystal();
         if (crystal == null) return;
 
-        attackCooldown = 0;
 
         if (FastCrystal.canBreakCrystal()) {
             FastCrystal.doAttack(crystal, true);
-
             crystal.discard();
+
+            attackCooldown = 0;
         }
     }
 }
