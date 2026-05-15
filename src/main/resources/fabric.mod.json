@@ -7,7 +7,7 @@
   "authors": [
     "MrBubbles"
   ],
-  "icon": "icon.png",
+  "icon": "assets/fastcrystal/icon.png",
   "environment": "*",
   "entrypoints": {
     "client": [
@@ -21,6 +21,7 @@
     "fastcrystal.mixins.json"
   ],
   "depends": {
+    "minecraft": ">=26.1",
     "fabric-api": "*"
   }
 }
