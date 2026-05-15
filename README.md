@@ -21,21 +21,20 @@ Simply installing FastCrystal on a Fabric server will automatically disable it f
 Alternatively, you can implement the opt-out packet:
 
 ```java
-package me.mrbubbles.fastcrystal;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.Identifier;
+import org.jspecify.annotations.NonNull;
 
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.util.Identifier;
-
-public class DisableFastCrystalPayload implements CustomPayload {
+public class DisableFastCrystalPayload implements CustomPacketPayload {
 
     public static final DisableFastCrystalPayload INSTANCE = new DisableFastCrystalPayload();
-    public static final Id<DisableFastCrystalPayload> ID = new Id<>(Identifier.of("fastcrystal", "disable_fast_crystal"));
-    public static final PacketCodec<RegistryByteBuf, DisableFastCrystalPayload> CODEC = PacketCodec.unit(INSTANCE);
+    public static final Type<DisableFastCrystalPayload> ID = new Type<>(Identifier.parse("fastcrystal:disable_fast_crystal"));
+    public static final StreamCodec<RegistryFriendlyByteBuf, DisableFastCrystalPayload> CODEC = StreamCodec.unit(INSTANCE);
 
     @Override
-    public Id<? extends CustomPayload> getId() {
+    public @NonNull Type<? extends CustomPacketPayload> type() {
         return ID;
     }
 }
@@ -45,8 +44,11 @@ public class DisableFastCrystalPayload implements CustomPayload {
 
 @Override
 public void onInitializeServer() {
-    PayloadTypeRegistry.playS2C().register(DisableFastCrystalPayload.ID, DisableFastCrystalPayload.CODEC);
-    ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> ServerPlayNetworking.send(handler.player, DisableFastCrystalPayload.INSTANCE));
+    PayloadTypeRegistry.clientboundPlay().register(DisableFastCrystalPayload.ID, DisableFastCrystalPayload.CODEC);
+    ServerPlayConnectionEvents.JOIN.register((handler, _, server) -> {
+        if (server.isSingleplayer()) return;
+        ServerPlayNetworking.send(handler.getPlayer(), DisableFastCrystalPayload.INSTANCE);
+    });
 }
 ```
 
