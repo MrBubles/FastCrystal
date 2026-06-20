@@ -2,6 +2,7 @@ package me.mrbubbles.fastcrystal;
 
 import com.google.common.util.concurrent.AtomicDouble;
 import me.mrbubbles.fastcrystal.mixin.ClientPlayerInteractionManagerInterface;
+import me.mrbubbles.fastcrystal.mixin.EntityInterface;
 import me.mrbubbles.fastcrystal.mixin.PlayerInventoryInterface;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
@@ -12,8 +13,12 @@ import net.minecraft.block.Blocks;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.AttributeModifierSlot;
+import net.minecraft.component.type.AttributeModifiersComponent;
+import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
+import net.minecraft.entity.attribute.EntityAttribute;
+import net.minecraft.entity.attribute.EntityAttributeModifier;
 import net.minecraft.entity.attribute.EntityAttributes;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.effect.StatusEffects;
@@ -26,6 +31,7 @@ import net.minecraft.network.packet.c2s.play.PlayerInteractBlockC2SPacket;
 import net.minecraft.network.packet.c2s.play.PlayerInteractEntityC2SPacket;
 import net.minecraft.network.packet.c2s.play.UpdateSelectedSlotC2SPacket;
 import net.minecraft.predicate.entity.EntityPredicates;
+import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
@@ -35,6 +41,8 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.RaycastContext;
+
+import java.util.function.BiConsumer;
 
 public class FastCrystal implements ClientModInitializer {
 
@@ -61,7 +69,7 @@ public class FastCrystal implements ClientModInitializer {
     public static boolean isCrystal(Entity entity) {
         if (mc.player == null || mc.world == null || entity == null || entity.isRemoved()) return false;
 
-        BlockPos pos = BlockPos.ofFloored(entity.getPos().add(-0.5, -1.0, -0.5));
+        BlockPos pos = BlockPos.ofFloored(((EntityInterface) entity).getPos().add(-0.5, -1.0, -0.5));
 
         BlockState state = mc.world.getBlockState(pos);
 
@@ -135,10 +143,17 @@ public class FastCrystal implements ClientModInitializer {
         if (item.isEmpty()) return 0.0D;
 
         AtomicDouble damage = new AtomicDouble();
-        item.applyAttributeModifier(AttributeModifierSlot.MAINHAND, (attribute, modifier) -> {
+        applyAttributeModifier(item, AttributeModifierSlot.MAINHAND, (attribute, modifier) -> {
             if (attribute.equals(EntityAttributes.ATTACK_DAMAGE)) damage.addAndGet(modifier.value());
         });
         return damage.get();
+    }
+
+
+    private static void applyAttributeModifier(ItemStack item, AttributeModifierSlot slot, BiConsumer<RegistryEntry<EntityAttribute>, EntityAttributeModifier> attributeModifierConsumer) {
+        AttributeModifiersComponent attributeModifiersComponent = item.getOrDefault(DataComponentTypes.ATTRIBUTE_MODIFIERS, AttributeModifiersComponent.DEFAULT);
+        attributeModifiersComponent.applyModifiers(slot, attributeModifierConsumer);
+        EnchantmentHelper.applyAttributeModifiers(item, slot, attributeModifierConsumer);
     }
 
     public static void sendPacket(Packet<?> packet) {

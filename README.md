@@ -8,13 +8,6 @@
 FastCrystal is a ClientSided Minecraft mod that makes end crystals go faster by removing all the delays for placing and
 breaking end crystals and removes them from the clientside too.
 
-## Versions
-
-| Version | Minecraft  | Branch   |
-|---------|------------|----------|
-| 2.0.1   | Pre-26.1   | `main`   |
-| 2.0.2   | 26.1       | `26.1`   |
-
 ## Opt-Out
 
 Servers can send out an opt-out packet which disables FastCrystal for the player it was sent to.
@@ -27,10 +20,9 @@ Simply installing FastCrystal on a Fabric server will automatically disable it f
 
 Alternatively, you can implement the opt-out packet:
 
-##### Pre-26.1 (2.0.1)
+##### Pre-26.1
 
 ```java
-package me.mrbubbles.fastcrystal;
 
 import net.minecraft.network.RegistryByteBuf;
 import net.minecraft.network.codec.PacketCodec;
@@ -59,7 +51,7 @@ public void onInitializeServer() {
 }
 ```
 
-##### 26.1+ (2.0.2)
+##### 26.1+
 
 ```java
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -86,10 +78,7 @@ public class DisableFastCrystalPayload implements CustomPacketPayload {
 @Override
 public void onInitializeServer() {
     PayloadTypeRegistry.clientboundPlay().register(DisableFastCrystalPayload.ID, DisableFastCrystalPayload.CODEC);
-    ServerPlayConnectionEvents.JOIN.register((handler, _, server) -> {
-        if (server.isSingleplayer()) return;
-        ServerPlayNetworking.send(handler.getPlayer(), DisableFastCrystalPayload.INSTANCE);
-    });
+    ServerPlayConnectionEvents.JOIN.register((handler, _, server) -> ServerPlayNetworking.send(handler.getPlayer(), DisableFastCrystalPayload.INSTANCE));
 }
 ```
 
