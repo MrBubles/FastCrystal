@@ -33,15 +33,13 @@ public abstract class MinecraftMixin {
     @Shadow
     public int missTime;
     @Shadow
-    private int rightClickDelay;
-
-    @Shadow
     @Nullable
     public HitResult crosshairTarget;
-
     @Shadow
     @Nullable
     public Entity targetedEntity;
+    @Shadow
+    private int rightClickDelay;
 
     @Inject(at = @At("HEAD"), method = "startUseItem")
     private void onStartUseItem(CallbackInfo ci) {
