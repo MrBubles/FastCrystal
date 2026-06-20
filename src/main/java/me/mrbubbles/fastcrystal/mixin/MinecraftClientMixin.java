@@ -36,17 +36,14 @@ public abstract class MinecraftClientMixin {
     public ClientPlayerInteractionManager interactionManager;
     @Shadow
     public int attackCooldown;
-
-    @Shadow
-    private int itemUseCooldown;
-
     @Shadow
     @Nullable
     public HitResult crosshairTarget;
-
     @Shadow
     @Nullable
     public Entity targetedEntity;
+    @Shadow
+    private int itemUseCooldown;
 
     @Inject(at = @At("HEAD"), method = "doItemUse")
     private void itemUse(CallbackInfo ci) {
