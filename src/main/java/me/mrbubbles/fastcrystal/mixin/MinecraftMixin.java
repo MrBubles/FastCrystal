@@ -33,13 +33,15 @@ public abstract class MinecraftMixin {
     @Shadow
     public int missTime;
     @Shadow
-    @Nullable
-    public HitResult crosshairTarget;
-    @Shadow
-    @Nullable
-    public Entity targetedEntity;
-    @Shadow
     private int rightClickDelay;
+
+    @Shadow
+    @org.jspecify.annotations.Nullable
+    public Entity crosshairPickEntity;
+
+    @Shadow
+    @org.jspecify.annotations.Nullable
+    public HitResult hitResult;
 
     @Inject(at = @At("HEAD"), method = "startUseItem")
     private void onStartUseItem(CallbackInfo ci) {
@@ -68,8 +70,8 @@ public abstract class MinecraftMixin {
         if (FastCrystal.canBreakCrystal()) {
             FastCrystal.doServerAttack(crystal);
             crystal.discard();
-            targetedEntity = null;
-            crosshairTarget = player.raycast(player.getBlockInteractionRange(), 1.0F, false);
+            crosshairPickEntity = null;
+            hitResult = player.pick(player.blockInteractionRange(), 1.0F, false);
 
             missTime = 0;
         }
