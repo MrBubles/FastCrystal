@@ -8,6 +8,7 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -34,6 +35,14 @@ public abstract class MinecraftMixin {
     @Shadow
     private int rightClickDelay;
 
+    @Shadow
+    @Nullable
+    public HitResult crosshairTarget;
+
+    @Shadow
+    @Nullable
+    public Entity targetedEntity;
+
     @Inject(at = @At("HEAD"), method = "startUseItem")
     private void onStartUseItem(CallbackInfo ci) {
         if (!FastCrystal.isEnabled() || gameMode.isDestroying() || player.isPassenger()) return;
@@ -59,8 +68,10 @@ public abstract class MinecraftMixin {
 
 
         if (FastCrystal.canBreakCrystal()) {
-            FastCrystal.doAttack(crystal, true);
+            FastCrystal.doServerAttack(crystal);
             crystal.discard();
+            targetedEntity = null;
+            crosshairTarget = player.raycast(player.getBlockInteractionRange(), 1.0F, false);
 
             missTime = 0;
         }

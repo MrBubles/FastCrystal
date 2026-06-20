@@ -63,7 +63,7 @@ public class FastCrystal implements ClientModInitializer {
 
         BlockState blockState = mc.level.getBlockState(belowPos);
 
-        if (!blockState.is(Blocks.OBSIDIAN) && !blockState.is(Blocks.BEDROCK)) return false;
+        if (!blockState.is(Blocks.OBSIDIAN) && !blockState.is(Blocks.BEDROCK)) return entity.getType().equals(EntityType.END_CRYSTAL);
 
         if (mc.player.getMainHandItem().getComponents().has(DataComponents.TOOL) || mc.player.getOffhandItem().getComponents().has(DataComponents.TOOL))
             return entity.getType().equals(EntityType.END_CRYSTAL);
@@ -162,17 +162,12 @@ public class FastCrystal implements ClientModInitializer {
         }
     }
 
-    public static void doAttack(Entity entity, boolean serverSide) {
+    public static void doServerAttack(Entity entity) {
         if (mc.player == null || mc.gameMode == null) return;
 
-        if (serverSide) {
-            ensureHasSentCarriedItem();
-            sendPacket(new ServerboundAttackPacket(entity.getId()));
-            sendPacket(new ServerboundSwingPacket(InteractionHand.MAIN_HAND));
-        } else {
-            mc.gameMode.attack(mc.player, entity);
-            mc.player.swing(InteractionHand.MAIN_HAND);
-        }
+        ensureHasSentCarriedItem();
+        sendPacket(new ServerboundAttackPacket(entity.getId()));
+        sendPacket(new ServerboundSwingPacket(InteractionHand.MAIN_HAND));
     }
 
     @Override
