@@ -6,7 +6,9 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.components.toasts.SystemToast;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
@@ -20,7 +22,6 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.projectile.ProjectileUtil;
@@ -58,18 +59,19 @@ public class FastCrystal implements ClientModInitializer {
 
     public static boolean isCrystal(Entity entity) {
         if (mc.player == null || mc.level == null || entity == null || entity.isRemoved()) return false;
+        System.out.println(entity.getType().toShortString());
 
         BlockPos belowPos = BlockPos.containing(entity.position().add(-0.5, -1.0, -0.5));
 
         BlockState blockState = mc.level.getBlockState(belowPos);
 
         if (!blockState.is(Blocks.OBSIDIAN) && !blockState.is(Blocks.BEDROCK))
-            return entity.getType().equals(EntityType.END_CRYSTAL);
+            return entity.getType().toShortString().equals("end_crystal");
 
         if (mc.player.getMainHandItem().getComponents().has(DataComponents.TOOL) || mc.player.getOffhandItem().getComponents().has(DataComponents.TOOL))
-            return entity.getType().equals(EntityType.END_CRYSTAL);
+            return entity.getType().toShortString().equals("end_crystal");
 
-        return entity.getType().equals(EntityType.END_CRYSTAL) || entity.getType().equals(EntityType.SLIME) || entity.getType().equals(EntityType.MAGMA_CUBE);
+        return entity.getType().toShortString().equals("end_crystal") || entity.getType().toShortString().equals("slime") || entity.getType().toShortString().equals("magma_cube");
     }
 
     public static EntityHitResult getLookedAtEntityHit() {
@@ -176,7 +178,8 @@ public class FastCrystal implements ClientModInitializer {
         PayloadTypeRegistry.clientboundPlay().register(DisableFastCrystalPayload.ID, DisableFastCrystalPayload.CODEC);
         ClientPlayNetworking.registerGlobalReceiver(DisableFastCrystalPayload.ID, (_, context) -> context.client().execute(() -> {
             serverDisabled = true;
-            mc.gui.getChat().addClientSystemMessage(Component.literal("[FastCrystal] FastCrystal has been disabled on this server."));
+            // 26.2 compatiblity
+            SystemToast.add(mc.getToastManager(), SystemToast.SystemToastId.PERIODIC_NOTIFICATION, Component.literal("FastCrystal").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD), Component.literal("FastCrystal has been disabled on this server.").withStyle(ChatFormatting.RED));
         }));
 
         ClientPlayConnectionEvents.DISCONNECT.register((_, _) -> serverDisabled = false);
