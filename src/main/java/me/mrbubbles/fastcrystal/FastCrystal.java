@@ -59,19 +59,20 @@ public class FastCrystal implements ClientModInitializer {
 
     public static boolean isCrystal(Entity entity) {
         if (mc.player == null || mc.level == null || entity == null || entity.isRemoved()) return false;
-        System.out.println(entity.getType().toShortString());
 
         BlockPos belowPos = BlockPos.containing(entity.position().add(-0.5, -1.0, -0.5));
 
         BlockState blockState = mc.level.getBlockState(belowPos);
 
+        String type = entity.getType().toShortString();
+
         if (!blockState.is(Blocks.OBSIDIAN) && !blockState.is(Blocks.BEDROCK))
-            return entity.getType().toShortString().equals("end_crystal");
+            return type.equals("end_crystal");
 
         if (mc.player.getMainHandItem().getComponents().has(DataComponents.TOOL) || mc.player.getOffhandItem().getComponents().has(DataComponents.TOOL))
-            return entity.getType().toShortString().equals("end_crystal");
+            return type.equals("end_crystal");
 
-        return entity.getType().toShortString().equals("end_crystal") || entity.getType().toShortString().equals("slime") || entity.getType().toShortString().equals("magma_cube");
+        return type.equals("end_crystal") || type.equals("slime") || type.equals("magma_cube");
     }
 
     public static EntityHitResult getLookedAtEntityHit() {
@@ -178,8 +179,7 @@ public class FastCrystal implements ClientModInitializer {
         PayloadTypeRegistry.clientboundPlay().register(DisableFastCrystalPayload.ID, DisableFastCrystalPayload.CODEC);
         ClientPlayNetworking.registerGlobalReceiver(DisableFastCrystalPayload.ID, (_, context) -> context.client().execute(() -> {
             serverDisabled = true;
-            // 26.2 compatiblity
-            SystemToast.add(mc.getToastManager(), SystemToast.SystemToastId.PERIODIC_NOTIFICATION, Component.literal("FastCrystal").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD), Component.literal("FastCrystal has been disabled on this server.").withStyle(ChatFormatting.RED));
+            SystemToast.add(mc.getToastManager(), SystemToast.SystemToastId.PERIODIC_NOTIFICATION, Component.literal("FastCrystal").withStyle(ChatFormatting.DARK_PURPLE), Component.literal("FastCrystal has been disabled on this server.").withStyle(ChatFormatting.RED));
         }));
 
         ClientPlayConnectionEvents.DISCONNECT.register((_, _) -> serverDisabled = false);
