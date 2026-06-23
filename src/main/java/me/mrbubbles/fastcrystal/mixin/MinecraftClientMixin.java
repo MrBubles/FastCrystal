@@ -14,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -45,15 +46,19 @@ public abstract class MinecraftClientMixin {
     @Shadow
     private int itemUseCooldown;
 
+    @Unique
+    private static final Hand[] HANDS = Hand.values();
+
     @Inject(at = @At("HEAD"), method = "doItemUse")
     private void itemUse(CallbackInfo ci) {
         if (!FastCrystal.isEnabled() || interactionManager.isBreakingBlock() || player.isRiding()) return;
 
-        for (Hand hand : Hand.values()) {
+        BlockHitResult blockHit = FastCrystal.getLookedAtBlockHit();
+
+        for (Hand hand : HANDS) {
             if (!player.getStackInHand(hand).isItemEnabled(world.getEnabledFeatures())) continue;
-            BlockHitResult blockHit = FastCrystal.getLookedAtBlockHit();
             if (blockHit != null && FastCrystal.canPlaceCrystal(blockHit.getBlockPos(), hand) && options.useKey.isPressed() && !options.attackKey.isPressed()) {
-                FastCrystal.doInteractBlock(hand, blockHit, true);
+                FastCrystal.doServerInteractBlock(hand, blockHit);
                 itemUseCooldown = 0;
             }
         }
@@ -66,7 +71,6 @@ public abstract class MinecraftClientMixin {
 
         Entity crystal = FastCrystal.getLookedAtCrystal();
         if (crystal == null) return;
-
 
         if (FastCrystal.canBreakCrystal()) {
             FastCrystal.doServerAttack(crystal);
