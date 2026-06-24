@@ -18,7 +18,6 @@ import net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket;
 import net.minecraft.network.protocol.game.ServerboundSwingPacket;
 import net.minecraft.network.protocol.game.ServerboundUseItemOnPacket;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResult;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
@@ -35,11 +34,18 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+
 public class FastCrystal implements ClientModInitializer {
 
     public static final Minecraft mc = Minecraft.getInstance();
 
+    private static final Map<BlockPos, Long> pendingPlacements = new HashMap<>();
+    private static final Map<BlockPos, Long> attackQueue = new HashMap<>();
     private static boolean serverDisabled = false;
+    private static BlockPos predictedHitPos = null;
 
     public static boolean isEnabled() {
         return !serverDisabled;
@@ -58,44 +64,66 @@ public class FastCrystal implements ClientModInitializer {
     }
 
     public static boolean isCrystal(Entity entity) {
-        if (mc.player == null || mc.level == null || entity == null || entity.isRemoved()) return false;
-
-        BlockPos belowPos = BlockPos.containing(entity.position().add(-0.5, -1.0, -0.5));
-
-        BlockState blockState = mc.level.getBlockState(belowPos);
+        if (mc.player == null || mc.level == null || entity == null || entity.isRemoved() || !entity.isPickable())
+            return false;
 
         String type = entity.getType().toShortString();
+        if (type.equals("end_crystal")) return true;
+        if (!type.equals("slime") && !type.equals("magma_cube")) return false;
 
-        if (!blockState.is(Blocks.OBSIDIAN) && !blockState.is(Blocks.BEDROCK))
-            return type.equals("end_crystal");
+        BlockPos belowPos = BlockPos.containing(entity.position().add(-0.5, -1.0, -0.5));
+        BlockState blockState = mc.level.getBlockState(belowPos);
 
-        if (mc.player.getMainHandItem().getComponents().has(DataComponents.TOOL) || mc.player.getOffhandItem().getComponents().has(DataComponents.TOOL))
-            return type.equals("end_crystal");
+        if (!blockState.is(Blocks.OBSIDIAN) && !blockState.is(Blocks.BEDROCK)) return false;
 
-        return type.equals("end_crystal") || type.equals("slime") || type.equals("magma_cube");
+        return !mc.player.getMainHandItem().getComponents().has(DataComponents.TOOL) && !mc.player.getOffhandItem().getComponents().has(DataComponents.TOOL);
     }
 
-    public static EntityHitResult getLookedAtEntityHit() {
+    public static Entity getLookedAtCrystal() {
         if (mc.level == null || mc.player == null) return null;
 
         Entity camera = mc.getCameraEntity();
         if (camera == null) return null;
 
         double range = mc.player.getAttributeValue(Attributes.ENTITY_INTERACTION_RANGE);
-
+        double rangeSq = range * range;
         Vec3 eyePos = camera.getEyePosition(0f);
         Vec3 viewVec = camera.getViewVector(0f);
         Vec3 reachEnd = eyePos.add(viewVec.scale(range));
-
         AABB searchBox = camera.getBoundingBox().expandTowards(viewVec.scale(range)).inflate(1.0, 1.0, 1.0);
 
-        return ProjectileUtil.getEntityHitResult(camera, eyePos, reachEnd, searchBox, entity -> !entity.isSpectator() && entity.isPickable(), range * range);
+        EntityHitResult hitResult = ProjectileUtil.getEntityHitResult(camera, eyePos, reachEnd, searchBox, entity -> !entity.isSpectator() && entity.isPickable() && isCrystal(entity), rangeSq);
+        if (hitResult != null) return hitResult.getEntity();
+
+        predictedHitPos = null;
+        double predictedClosestDist = Double.MAX_VALUE;
+
+        for (Map.Entry<BlockPos, Long> entry : pendingPlacements.entrySet()) {
+            AABB box = crystalBox(entry.getKey());
+
+            if (box.contains(eyePos)) {
+                predictedHitPos = entry.getKey();
+                return null;
+            }
+
+            Optional<Vec3> optional = box.clip(eyePos, reachEnd);
+            if (optional.isPresent()) {
+                Vec3 vec3 = optional.get();
+                double dist = eyePos.distanceToSqr(vec3);
+                if (dist < predictedClosestDist && dist < rangeSq) {
+                    predictedClosestDist = dist;
+                    predictedHitPos = entry.getKey();
+                }
+            }
+        }
+
+        return null;
     }
 
-    public static Entity getLookedAtCrystal() {
-        EntityHitResult hitResult = getLookedAtEntityHit();
-        if (hitResult != null && isCrystal(hitResult.getEntity())) return hitResult.getEntity();
-        return null;
+    public static BlockPos getPredictedHit() {
+        BlockPos pos = predictedHitPos;
+        predictedHitPos = null;
+        return pos;
     }
 
     public static boolean canPlaceCrystal(BlockPos blockPos, InteractionHand hand) {
@@ -113,16 +141,15 @@ public class FastCrystal implements ClientModInitializer {
     }
 
     public static boolean canBreakCrystal() {
-        double attackDamage = mc.player.getAttributeBaseValue(Attributes.ATTACK_DAMAGE);
-        attackDamage += getWeaponDamage(mc.player.getMainHandItem());
+        MobEffectInstance weakness = mc.player.getEffect(MobEffects.WEAKNESS);
+        return calculateDamage(weakness) > 0.0;
+    }
 
-        MobEffectInstance strengthEffect = mc.player.getEffect(MobEffects.STRENGTH);
-        if (strengthEffect != null) attackDamage += 3.0 * (strengthEffect.getAmplifier() + 1);
-
-        MobEffectInstance weaknessEffect = mc.player.getEffect(MobEffects.WEAKNESS);
-        if (weaknessEffect != null) attackDamage -= 4.0 * (weaknessEffect.getAmplifier() + 1);
-
-        return attackDamage > 0.0;
+    private static double calculateDamage(MobEffectInstance weakness) {
+        MobEffectInstance strength = mc.player.getEffect(MobEffects.STRENGTH);
+        double strengthBonus = (strength != null) ? 3.0 * (strength.getAmplifier() + 1) : 0.0;
+        double weaknessPenalty = (weakness != null) ? 4.0 * (weakness.getAmplifier() + 1) : 0.0;
+        return Math.max(0.0, mc.player.getAttributeValue(Attributes.ATTACK_DAMAGE) + getWeaponDamage(mc.player.getMainHandItem()) + strengthBonus - weaknessPenalty);
     }
 
     private static double getWeaponDamage(ItemStack stack) {
@@ -153,17 +180,13 @@ public class FastCrystal implements ClientModInitializer {
         }
     }
 
-    public static void doInteractBlock(InteractionHand hand, BlockHitResult hitResult, boolean serverSide) {
+    public static void doServerInteractBlock(InteractionHand hand, BlockHitResult hitResult) {
         if (mc.player == null || mc.gameMode == null) return;
 
-        if (serverSide) {
-            ensureHasSentCarriedItem();
-            sendPacket(new ServerboundUseItemOnPacket(hand, hitResult, 0));
-            mc.player.swing(hand);
-        } else {
-            InteractionResult interactionResult = mc.gameMode.useItemOn(mc.player, hand, hitResult);
-            if (interactionResult.consumesAction()) mc.player.swing(hand);
-        }
+        ensureHasSentCarriedItem();
+        sendPacket(new ServerboundUseItemOnPacket(hand, hitResult, 0));
+        mc.player.swing(hand);
+        addPendingPlacement(hitResult.getBlockPos());
     }
 
     public static void doServerAttack(Entity entity) {
@@ -172,6 +195,55 @@ public class FastCrystal implements ClientModInitializer {
         ensureHasSentCarriedItem();
         sendPacket(new ServerboundAttackPacket(entity.getId()));
         sendPacket(new ServerboundSwingPacket(InteractionHand.MAIN_HAND));
+    }
+
+    private static void addPendingPlacement(BlockPos pos) {
+        cleanup();
+        pendingPlacements.put(pos, System.currentTimeMillis());
+    }
+
+    public static void queueAttack(BlockPos pos) {
+        cleanup();
+        attackQueue.put(pos, System.currentTimeMillis());
+    }
+
+    private static AABB crystalBox(BlockPos base) {
+        BlockPos pos = base.above();
+        return new AABB(pos.getX() - 0.5, pos.getY(), pos.getZ() - 0.5, pos.getX() + 1.5, pos.getY() + 2.0, pos.getZ() + 1.5);
+    }
+
+    private static void cleanup() {
+        long now = System.currentTimeMillis();
+        long ping = 0;
+        if (mc.getConnection() != null && mc.player != null) {
+            var entry = mc.getConnection().getPlayerInfo(mc.player.getUUID());
+            if (entry != null) ping = entry.getLatency();
+        }
+        long ttl = Math.max(50, ping * 2L + ping * ping / 200L);
+        pendingPlacements.values().removeIf(time -> now - time > ttl);
+        attackQueue.values().removeIf(time -> now - time > ttl);
+    }
+
+    public static void onEntitySpawn(Entity entity) {
+        if (!isCrystal(entity)) return;
+        cleanup();
+        if (attackQueue.isEmpty() || mc.player == null || mc.level == null) return;
+
+        Entity camera = mc.getCameraEntity();
+        if (camera == null) return;
+
+        BlockPos pos = new BlockPos((int) (entity.getX() - 0.5), (int) (entity.getY()) - 1, (int) (entity.getZ() - 0.5));
+        if (!attackQueue.containsKey(pos)) return;
+
+        Vec3 eyePos = camera.getEyePosition(0f);
+        Vec3 viewVec = camera.getViewVector(0f);
+        Vec3 reachEnd = eyePos.add(viewVec.scale(mc.player.getAttributeValue(Attributes.ENTITY_INTERACTION_RANGE)));
+        AABB expandedBox = entity.getBoundingBox().inflate(entity.getPickRadius());
+        if (expandedBox.clip(eyePos, reachEnd).isEmpty() && !expandedBox.contains(eyePos)) return;
+
+        attackQueue.remove(pos);
+        pendingPlacements.remove(pos);
+        doServerAttack(entity);
     }
 
     @Override
