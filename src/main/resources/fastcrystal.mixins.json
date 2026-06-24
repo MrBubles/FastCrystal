@@ -9,6 +9,7 @@
   ],
   "client": [
     "ClientPlayerInteractionManagerInterface",
+    "ClientWorldMixin",
     "MinecraftClientMixin"
   ],
   "injectors": {
