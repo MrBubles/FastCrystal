@@ -8,6 +8,7 @@
     "PlayerInventoryInterface"
   ],
   "client": [
+    "ClientConnectionMixin",
     "ClientPlayerInteractionManagerInterface",
     "ClientWorldMixin",
     "MinecraftClientMixin"

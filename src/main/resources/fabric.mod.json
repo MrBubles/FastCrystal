@@ -3,7 +3,7 @@
   "id": "fastcrystal",
   "version": "${version}",
   "name": "FastCrystal",
-  "description": "Makes crystals faster.",
+  "description": "Makes crystals faster",
   "authors": [
     "MrBubbles"
   ],
