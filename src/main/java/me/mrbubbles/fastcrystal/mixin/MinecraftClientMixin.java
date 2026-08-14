@@ -74,9 +74,9 @@ public abstract class MinecraftClientMixin {
 
         Entity crystal = FastCrystal.getLookedAtCrystal();
         if (crystal != null) {
-            FastCrystal.GhostCrystalEntity ghost = FastCrystal.getGhost(crystal);
-            if (ghost != null) {
-                FastCrystal.attackGhost(ghost);
+            FastCrystal.FakeEndCrystalEntity fakeCrystal = FastCrystal.getFakeCrystal(crystal);
+            if (fakeCrystal != null) {
+                FastCrystal.attackFakeCrystal(fakeCrystal);
             } else {
                 FastCrystal.doServerAttack(crystal);
                 FastCrystal.predictExplosion(crystal);

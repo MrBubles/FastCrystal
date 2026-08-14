@@ -28,21 +28,15 @@ public class ClientWorldMixin {
             return;
 
         BlockPos pos = FastCrystal.baseOf(x, y, z);
-        boolean cancelled = FastCrystal.pendingExplosions.containsKey(pos);
-        if (cancelled) {
+        if (FastCrystal.pendingExplosions.containsKey(pos)) {
             ci.cancel();
             FastCrystal.onPredictedExplosionSound(pos);
-        } else {
-            FastCrystal.onCrystalExploded(pos);
-        }
+        } else FastCrystal.onCrystalExploded(pos);
     }
 
     @Inject(at = @At("HEAD"), method = "addParticle(Lnet/minecraft/particle/ParticleEffect;DDDDDD)V", cancellable = true)
     private void addParticle(ParticleEffect parameters, double x, double y, double z, double velocityX, double velocityY, double velocityZ, CallbackInfo ci) {
-        if (parameters.getType() != ParticleTypes.EXPLOSION_EMITTER) return;
-
-        if (FastCrystal.pendingExplosions.containsKey(FastCrystal.baseOf(x, y, z))) {
+        if (parameters.getType() == ParticleTypes.EXPLOSION_EMITTER && FastCrystal.pendingExplosions.containsKey(FastCrystal.baseOf(x, y, z)))
             ci.cancel();
-        }
     }
 }
