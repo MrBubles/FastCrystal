@@ -297,9 +297,16 @@ public class FastCrystal implements ClientModInitializer {
     }
 
     private static long getEffectivePing() {
-        if (ping < 0) return lastEffectivePing;
-        lastEffectivePing = Math.max(ping, (long) (lastEffectivePing * 0.999));
+        long raw = ping >= 0 ? ping : getPing();
+        lastEffectivePing = Math.max(raw, (long) (lastEffectivePing * 0.999));
         return lastEffectivePing;
+    }
+
+    private static long getPing() {
+        if (mc.getNetworkHandler() == null || mc.player == null) return 0;
+
+        var entry = mc.getNetworkHandler().getPlayerListEntry(mc.player.getUuid());
+        return entry != null ? entry.getLatency() : 0;
     }
 
     private static void tickPingSampler() {
