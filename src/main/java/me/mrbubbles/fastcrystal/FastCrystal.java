@@ -6,14 +6,10 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
-import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.option.KeyBinding;
-import net.minecraft.client.util.InputUtil;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.AttributeModifierSlot;
 import net.minecraft.component.type.AttributeModifiersComponent;
@@ -47,8 +43,6 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.RaycastContext;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
-import org.lwjgl.glfw.GLFW;
-import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -63,8 +57,6 @@ public class FastCrystal implements ClientModInitializer {
     private static final Map<BlockPos, Long> attackQueue = new HashMap<>();
     private static final Map<BlockPos, FakeEndCrystalEntity> fakeCrystals = new HashMap<>();
     private static final Map<BlockPos, PendingBreak> pendingBreaks = new HashMap<>();
-    private static final ArrayDeque<Long> placeTimes = new ArrayDeque<>();
-    private static final ArrayDeque<Long> breakTimes = new ArrayDeque<>();
     public static boolean predicting = false;
     private static boolean serverDisabled = false;
     private static BlockPos predictedHitPos = null;
@@ -75,19 +67,8 @@ public class FastCrystal implements ClientModInitializer {
     private static volatile int ping = -1;
     private static volatile long lastVanillaPingAt = 0L;
     private static volatile long vanillaPingInterval = 0L;
-    private static final KeyBinding benchmarkKey = KeyBindingHelper.registerKeyBinding(new KeyBinding("key.fastcrystal.benchmark", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_F7, "FastCrystal"));
-    private static boolean benchmarkActive = false;
-    private static int benchmarkPhase = 0;
-    private static long benchmarkElapsed = 0L;
-    private static long benchmarkLastTick = 0L;
-    private static boolean benchmarkAlternate = false;
-    private static long benchPlacedOff = 0L;
-    private static long benchBrokenOff = 0L;
-    private static long benchPlacedOn = 0L;
-    private static long benchBrokenOn = 0L;
 
     public static boolean isEnabled() {
-        if (benchmarkActive) return benchmarkPhase == 1;
         return !serverDisabled;
     }
 
@@ -398,107 +379,9 @@ public class FastCrystal implements ClientModInitializer {
         }
     }
 
-    private static void addCps(ArrayDeque<Long> times) {
-        long now = System.currentTimeMillis();
-        times.addLast(now);
-        times.removeIf(time -> now - time > 1000L);
-    }
-
-    private static int getCps(ArrayDeque<Long> times) {
-        long now = System.currentTimeMillis();
-        times.removeIf(time -> now - time > 1000L);
-        return times.size();
-    }
-
-    private static void toggleBenchmark() {
-        if (benchmarkActive) {
-            benchmarkActive = false;
-            drainInput();
-            sendBenchmarkMessage("[FastCrystal] Benchmark stopped.");
-        } else {
-            if (mc.world == null || mc.player == null) return;
-            benchmarkActive = true;
-            benchmarkPhase = 0;
-            benchmarkElapsed = 0L;
-            benchmarkLastTick = 0L;
-            benchmarkAlternate = false;
-            benchPlacedOff = 0L;
-            benchBrokenOff = 0L;
-            benchPlacedOn = 0L;
-            benchBrokenOn = 0L;
-            sendBenchmarkMessage("[FastCrystal] Benchmark started: 15s vanilla, 15s FastCrystal. Hold an end crystal to run.");
-        }
-    }
-
-    private static void tickBenchmark() {
-        if (!benchmarkActive || mc.player == null) return;
-
-        if (!mc.player.getMainHandStack().isOf(Items.END_CRYSTAL)) {
-            benchmarkLastTick = 0L;
-            drainInput();
-            return;
-        }
-
-        long now = System.currentTimeMillis();
-        if (benchmarkLastTick != 0L) benchmarkElapsed += now - benchmarkLastTick;
-        benchmarkLastTick = now;
-
-        if (benchmarkAlternate) {
-            mc.options.useKey.setPressed(true);
-            KeyBinding.onKeyPressed(InputUtil.Type.MOUSE.createFromCode(1));
-            mc.options.attackKey.setPressed(false);
-        } else {
-            mc.options.attackKey.setPressed(true);
-            KeyBinding.onKeyPressed(InputUtil.Type.MOUSE.createFromCode(0));
-            mc.options.useKey.setPressed(false);
-        }
-        benchmarkAlternate = !benchmarkAlternate;
-
-        if (benchmarkPhase == 0 && benchmarkElapsed >= 15000L) {
-            benchmarkPhase = 1;
-            drainInput();
-            sendBenchmarkMessage(String.format("[FastCrystal] Vanilla phase done: %.1f placed/s, %.1f broken/s", rate(benchPlacedOff, 15000L), rate(benchBrokenOff, 15000L)));
-        } else if (benchmarkPhase == 1 && benchmarkElapsed >= 30000L) {
-            benchmarkActive = false;
-            drainInput();
-            double offP = rate(benchPlacedOff, 15000L);
-            double offB = rate(benchBrokenOff, 15000L);
-            double onP = rate(benchPlacedOn, 15000L);
-            double onB = rate(benchBrokenOn, 15000L);
-            sendBenchmarkMessage(String.format("[FastCrystal] Done. Vanilla: %.1f placed/s, %.1f broken/s | FastCrystal: %.1f placed/s, %.1f broken/s | Speedup: %.2fx place, %.2fx break", offP, offB, onP, onB, onP / offP, onB / offB));
-        }
-    }
-
-    private static void drainInput() {
-        mc.options.useKey.setPressed(false);
-        mc.options.attackKey.setPressed(false);
-        mc.options.useKey.wasPressed();
-        mc.options.attackKey.wasPressed();
-    }
-
-    private static void sendBenchmarkMessage(String message) {
-        if (mc.player != null) mc.player.sendMessage(Text.literal(message), false);
-    }
-
-    private static double rate(long count, long millis) {
-        if (millis <= 0L) return 0.0;
-        return count * 1000.0 / millis;
-    }
-
-    private static void benchmarkBroken() {
-        if (!benchmarkActive) return;
-        if (benchmarkPhase == 0) benchBrokenOff++;
-        else benchBrokenOn++;
-    }
-
     public static boolean onEntitySpawn(Entity entity) {
         boolean crystal = isCrystal(entity);
         if (entity.getId() < 0 || !crystal) return false;
-
-        if (benchmarkActive) {
-            if (benchmarkPhase == 0) benchPlacedOff++;
-            else benchPlacedOn++;
-        }
 
         BlockPos pos = baseOf(entity.getX(), entity.getY(), entity.getZ());
         FakeEndCrystalEntity fakeCrystal = fakeCrystals.get(pos);
@@ -506,7 +389,6 @@ public class FastCrystal implements ClientModInitializer {
 
         EndCrystalEntity real = (EndCrystalEntity) entity;
         fakeCrystal.real = real;
-        addCps(placeTimes);
         pendingPlacements.remove(pos);
         pendingBreaks.remove(pos);
         cleanup();
@@ -546,19 +428,14 @@ public class FastCrystal implements ClientModInitializer {
 
     public static void onPredictedExplosionSound(BlockPos pos) {
         pendingBreaks.remove(pos);
-        addCps(breakTimes);
-        benchmarkBroken();
     }
 
     public static void onCrystalExploded(BlockPos pos) {
         pendingBreaks.remove(pos);
         destroyFakeCrystal(fakeCrystals.get(pos));
-        benchmarkBroken();
     }
 
     public static void onDisconnect() {
-        benchmarkActive = false;
-        drainInput();
         for (FakeEndCrystalEntity fakeCrystal : fakeCrystals.values().toArray(new FakeEndCrystalEntity[0])) {
             destroyFakeCrystal(fakeCrystal);
         }
@@ -567,8 +444,6 @@ public class FastCrystal implements ClientModInitializer {
         attackQueue.clear();
         pendingExplosions.clear();
         pendingBreaks.clear();
-        placeTimes.clear();
-        breakTimes.clear();
         lastEffectivePing = 250;
         pingSentAt = 0L;
         pingPending = true;
@@ -601,26 +476,9 @@ public class FastCrystal implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            while (benchmarkKey.wasPressed()) toggleBenchmark();
-            tickBenchmark();
             syncSelectedSlot();
             tickPingSampler();
             cleanup();
-        });
-        HudRenderCallback.EVENT.register((context, tickDelta) -> {
-            if (mc.world == null || mc.player == null) return;
-            String hud;
-            if (benchmarkActive) {
-                if (benchmarkPhase == 0) {
-                    hud = "Benchmark: FastCrystal OFF P " + String.format("%.1f", rate(benchPlacedOff, benchmarkElapsed)) + "/s B " + String.format("%.1f", rate(benchBrokenOff, benchmarkElapsed)) + "/s [" + benchmarkElapsed / 1000 + "s]";
-                } else {
-                    hud = "Benchmark: FastCrystal ON P " + String.format("%.1f", rate(benchPlacedOn, benchmarkElapsed - 15000)) + "/s B " + String.format("%.1f", rate(benchBrokenOn, benchmarkElapsed - 15000)) + "/s [" + (benchmarkElapsed - 15000) / 1000 + "s]";
-                }
-            } else {
-                if (!isEnabled()) return;
-                hud = "Placed: " + getCps(placeTimes) + "/s Broken: " + getCps(breakTimes) + "/s";
-            }
-            context.drawText(mc.textRenderer, Text.literal(hud), 2, 2, 0xFFFFFF, true);
         });
         PayloadTypeRegistry.playS2C().register(DisableFastCrystalPayload.ID, DisableFastCrystalPayload.CODEC);
         ClientPlayNetworking.registerGlobalReceiver(DisableFastCrystalPayload.ID, (payload, context) -> context.client().execute(() -> {
