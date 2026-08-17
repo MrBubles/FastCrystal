@@ -180,6 +180,7 @@ public class FastCrystal implements ClientModInitializer {
             return false;
 
         if (!mc.world.isAir(pos.up())) return false;
+        if (pendingPlacements.containsKey(pos)) return false;
 
         BlockPos crystalPos = pos.up();
         return mc.world.getOtherEntities(null, new Box(crystalPos.getX(), crystalPos.getY(), crystalPos.getZ(), crystalPos.getX() + 1.0, crystalPos.getY() + 2.0, crystalPos.getZ() + 1.0)).isEmpty();
@@ -261,10 +262,10 @@ public class FastCrystal implements ClientModInitializer {
     public static void attackFakeCrystal(FakeEndCrystalEntity fakeCrystal) {
         if (fakeCrystal.real != null) {
             attackCrystal(fakeCrystal.getInteractPos(), fakeCrystal.real);
-            destroyFakeCrystal(fakeCrystal);
         } else {
             queueAttack(fakeCrystal.getInteractPos());
         }
+        destroyFakeCrystal(fakeCrystal);
     }
 
     private static void attackCrystal(BlockPos pos, EndCrystalEntity real) {
@@ -363,8 +364,14 @@ public class FastCrystal implements ClientModInitializer {
         Iterator<Map.Entry<BlockPos, FakeEndCrystalEntity>> it = fakeCrystals.entrySet().iterator();
         while (it.hasNext()) {
             Map.Entry<BlockPos, FakeEndCrystalEntity> entry = it.next();
-            if (entry.getValue().real == null && !pendingPlacements.containsKey(entry.getKey())) {
-                removeFakeCrystal(entry.getValue());
+            FakeEndCrystalEntity fakeCrystal = entry.getValue();
+            if (fakeCrystal.real != null && fakeCrystal.real.isRemoved()) {
+                removeFakeCrystal(fakeCrystal);
+                it.remove();
+                continue;
+            }
+            if (fakeCrystal.real == null && !pendingPlacements.containsKey(entry.getKey())) {
+                removeFakeCrystal(fakeCrystal);
                 it.remove();
             }
         }
@@ -385,28 +392,29 @@ public class FastCrystal implements ClientModInitializer {
 
         BlockPos pos = baseOf(entity.getX(), entity.getY(), entity.getZ());
         FakeEndCrystalEntity fakeCrystal = fakeCrystals.get(pos);
-        if (fakeCrystal == null) return false;
+        boolean hadFake = fakeCrystal != null;
 
-        EndCrystalEntity real = (EndCrystalEntity) entity;
-        fakeCrystal.real = real;
+        if (hadFake) {
+            fakeCrystal.real = (EndCrystalEntity) entity;
+        }
         pendingPlacements.remove(pos);
         pendingBreaks.remove(pos);
         cleanup();
-        if (!attackQueue.containsKey(pos)) return true;
+        if (!attackQueue.containsKey(pos)) return hadFake;
 
         Entity camera = mc.getCameraEntity();
-        if (camera == null) return true;
+        if (camera == null) return hadFake;
 
         Vec3d camPos = camera.getCameraPosVec(0f);
         Vec3d lookVec = camera.getRotationVec(0f);
         Vec3d endPos = camPos.add(lookVec.multiply(mc.player.getEntityInteractionRange()));
         Box expandedBox = entity.getBoundingBox().expand(entity.getTargetingMargin());
         if (expandedBox.raycast(camPos, endPos).isEmpty() && !expandedBox.contains(camPos)) {
-            return true;
+            return hadFake;
         }
 
         attackQueue.remove(pos);
-        attackCrystal(pos, real);
+        attackCrystal(pos, (EndCrystalEntity) entity);
         destroyFakeCrystal(fakeCrystal);
         return true;
     }
@@ -427,6 +435,7 @@ public class FastCrystal implements ClientModInitializer {
     }
 
     public static void onPredictedExplosionSound(BlockPos pos) {
+        pendingExplosions.remove(pos);
         pendingBreaks.remove(pos);
     }
 

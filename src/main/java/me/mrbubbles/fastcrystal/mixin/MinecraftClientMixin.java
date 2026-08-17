@@ -7,6 +7,7 @@ import net.minecraft.client.network.ClientPlayerInteractionManager;
 import net.minecraft.client.option.GameOptions;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.Entity;
+import net.minecraft.item.Items;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.HitResult;
@@ -49,6 +50,14 @@ public abstract class MinecraftClientMixin {
     @Shadow
     private int itemUseCooldown;
 
+    @Unique
+    private boolean crystalHandled = false;
+
+    @Unique
+    private boolean isHoldingCrystal() {
+        return player != null && (player.getStackInHand(Hand.MAIN_HAND).isOf(Items.END_CRYSTAL) || player.getStackInHand(Hand.OFF_HAND).isOf(Items.END_CRYSTAL));
+    }
+
     @Inject(at = @At("HEAD"), method = "doItemUse")
     private void doItemUse(CallbackInfo ci) {
         if (!FastCrystal.isEnabled() || interactionManager.isBreakingBlock() || player.isRiding()) return;
@@ -61,9 +70,18 @@ public abstract class MinecraftClientMixin {
             if (!player.getStackInHand(hand).isItemEnabled(world.getEnabledFeatures())) continue;
             if (options.useKey.isPressed() && !options.attackKey.isPressed() && FastCrystal.canPlaceCrystal(pos, hand)) {
                 FastCrystal.doServerInteractBlock(hand, blockHit);
-                itemUseCooldown = 0;
+                crystalHandled = true;
                 return;
             }
+        }
+    }
+
+    @Inject(at = @At("TAIL"), method = "doItemUse")
+    private void doItemUseTail(CallbackInfo ci) {
+        boolean holdingCrystal = isHoldingCrystal();
+        if (crystalHandled || (FastCrystal.isEnabled() && holdingCrystal)) {
+            crystalHandled = false;
+            itemUseCooldown = 0;
         }
     }
 
@@ -74,6 +92,7 @@ public abstract class MinecraftClientMixin {
 
         Entity crystal = FastCrystal.getLookedAtCrystal();
         if (crystal != null) {
+            crystalHandled = true;
             FastCrystal.FakeEndCrystalEntity fakeCrystal = FastCrystal.getFakeCrystal(crystal);
             if (fakeCrystal != null) {
                 FastCrystal.attackFakeCrystal(fakeCrystal);
@@ -84,14 +103,21 @@ public abstract class MinecraftClientMixin {
             }
             targetedEntity = null;
             crosshairTarget = player.raycast(player.getBlockInteractionRange(), 1.0F, false);
-            attackCooldown = 0;
             return;
         }
 
         BlockPos predictedPos = FastCrystal.getPredictedHit();
         if (predictedPos != null) {
-            attackCooldown = 0;
+            crystalHandled = true;
             FastCrystal.queueAttack(predictedPos);
+        }
+    }
+
+    @Inject(at = @At("TAIL"), method = "doAttack")
+    private void doAttackTail(CallbackInfoReturnable<Boolean> cir) {
+        if (crystalHandled || (FastCrystal.isEnabled() && isHoldingCrystal())) {
+            crystalHandled = false;
+            attackCooldown = 0;
         }
     }
 }
