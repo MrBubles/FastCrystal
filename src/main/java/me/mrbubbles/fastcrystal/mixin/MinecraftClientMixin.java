@@ -2,6 +2,7 @@ package me.mrbubbles.fastcrystal.mixin;
 
 import me.mrbubbles.fastcrystal.FastCrystal;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.network.ClientPlayerInteractionManager;
 import net.minecraft.client.option.GameOptions;
@@ -48,10 +49,19 @@ public abstract class MinecraftClientMixin {
     @Nullable
     public Entity targetedEntity;
     @Shadow
+    @Nullable
+    public Screen currentScreen;
+    @Shadow
     private int itemUseCooldown;
 
     @Unique
     private boolean crystalHandled = false;
+
+    @Unique
+    private long usePressNanos = 0L;
+
+    @Unique
+    private long attackPressNanos = 0L;
 
     @Unique
     private boolean isHoldingCrystal() {
@@ -60,15 +70,21 @@ public abstract class MinecraftClientMixin {
 
     @Inject(at = @At("HEAD"), method = "doItemUse")
     private void doItemUse(CallbackInfo ci) {
-        if (!FastCrystal.isEnabled() || interactionManager.isBreakingBlock() || player.isRiding()) return;
+        doFastPlace();
+    }
 
-        BlockHitResult blockHit = FastCrystal.getLookedAtBlockHit();
+    @Unique
+    private void doFastPlace() {
+        if (!FastCrystal.isEnabled() || interactionManager.isBreakingBlock() || player.isRiding() || !options.useKey.isPressed() || options.attackKey.isPressed())
+            return;
+
+        BlockHitResult blockHit = FastCrystal.getPlaceHit(FastCrystal.getLookedAtBlockHit());
         if (blockHit == null) return;
 
         BlockPos pos = blockHit.getBlockPos();
         for (Hand hand : HANDS) {
             if (!player.getStackInHand(hand).isItemEnabled(world.getEnabledFeatures())) continue;
-            if (options.useKey.isPressed() && !options.attackKey.isPressed() && FastCrystal.canPlaceCrystal(pos, hand)) {
+            if (FastCrystal.canPlaceCrystal(pos, hand)) {
                 FastCrystal.doServerInteractBlock(hand, blockHit);
                 crystalHandled = true;
                 return;
@@ -87,6 +103,11 @@ public abstract class MinecraftClientMixin {
 
     @Inject(at = @At("HEAD"), method = "doAttack")
     private void doAttack(CallbackInfoReturnable<Boolean> cir) {
+        doFastBreak();
+    }
+
+    @Unique
+    private void doFastBreak() {
         if (!FastCrystal.isEnabled() || player.isRiding() || !player.getStackInHand(Hand.MAIN_HAND).isItemEnabled(world.getEnabledFeatures()) || !FastCrystal.canBreakCrystal())
             return;
 
@@ -119,5 +140,20 @@ public abstract class MinecraftClientMixin {
             crystalHandled = false;
             attackCooldown = 0;
         }
+    }
+
+    @Inject(at = @At("HEAD"), method = "render(Z)V")
+    private void render(CallbackInfo ci) {
+        long now = System.nanoTime();
+        boolean useDown = options.useKey.isPressed();
+        boolean attackDown = options.attackKey.isPressed();
+        if (!useDown) usePressNanos = 0L;
+        else if (usePressNanos == 0L) usePressNanos = now;
+        if (!attackDown) attackPressNanos = 0L;
+        else if (attackPressNanos == 0L) attackPressNanos = now;
+        if (currentScreen != null || player == null || world == null || interactionManager == null || !FastCrystal.fastHook)
+            return;
+        if (useDown && now - usePressNanos <= 300000000L) doFastPlace();
+        if (attackDown && now - attackPressNanos <= 300000000L) doFastBreak();
     }
 }
