@@ -151,8 +151,7 @@ public abstract class MinecraftClientMixin {
         else if (usePressNanos == 0L) usePressNanos = now;
         if (!attackDown) attackPressNanos = 0L;
         else if (attackPressNanos == 0L) attackPressNanos = now;
-        if (currentScreen != null || player == null || world == null || interactionManager == null || !FastCrystal.fastHook)
-            return;
+        if (currentScreen != null || player == null || world == null || interactionManager == null) return;
         if (useDown && now - usePressNanos <= 300000000L) doFastPlace();
         if (attackDown && now - attackPressNanos <= 300000000L) doFastBreak();
     }

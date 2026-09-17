@@ -3,8 +3,6 @@ package me.mrbubbles.fastcrystal;
 import me.mrbubbles.fastcrystal.mixin.ClientPlayerInteractionManagerInterface;
 import me.mrbubbles.fastcrystal.mixin.PlayerInventoryInterface;
 import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
-import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
@@ -61,13 +59,12 @@ public class FastCrystal implements ClientModInitializer {
     private static boolean serverDisabled = false;
     private static BlockPos predictedHitPos = null;
     private static int nextFakeCrystalId = -2;
-    public static boolean fastHook = true;
+    private static long lastEffectivePing = 250L;
     private static volatile long pingSentAt = 0L;
     private static volatile boolean pingPending = true;
     private static volatile int ping = -1;
     private static volatile long lastVanillaPingAt = 0L;
     private static volatile long vanillaPingInterval = 0L;
-    private static long lastEffectivePing = 250L;
     private static World lastWorld = null;
 
     public static boolean isEnabled() {
@@ -155,7 +152,6 @@ public class FastCrystal implements ClientModInitializer {
         EntityType<?> type = entity.getType();
         if (type == EntityType.END_CRYSTAL) return true;
         if (type != EntityType.SLIME && type != EntityType.MAGMA_CUBE) return false;
-        if (entity.age > 200) return false;
 
         BlockState state = mc.world.getBlockState(baseOf(entity.getX(), entity.getY(), entity.getZ()));
 
@@ -534,12 +530,6 @@ public class FastCrystal implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
-        ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) ->
-                dispatcher.register(ClientCommandManager.literal("fastcrystalhook").executes(context -> {
-                    fastHook = !fastHook;
-                    mc.inGameHud.getChatHud().addMessage(Text.literal("[FastCrystal] Frame hook is now " + (fastHook ? "on." : "off.")));
-                    return 1;
-                })));
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             syncSelectedSlot();
             tickPingSampler();
