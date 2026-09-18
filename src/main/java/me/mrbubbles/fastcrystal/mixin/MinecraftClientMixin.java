@@ -58,10 +58,10 @@ public abstract class MinecraftClientMixin {
     private boolean crystalHandled = false;
 
     @Unique
-    private long usePressNanos = 0L;
+    private boolean useWasDown;
 
     @Unique
-    private long attackPressNanos = 0L;
+    private boolean attackWasDown;
 
     @Unique
     private boolean isHoldingCrystal() {
@@ -144,15 +144,24 @@ public abstract class MinecraftClientMixin {
 
     @Inject(at = @At("HEAD"), method = "render(Z)V")
     private void render(CallbackInfo ci) {
-        long now = System.nanoTime();
         boolean useDown = options.useKey.isPressed();
         boolean attackDown = options.attackKey.isPressed();
-        if (!useDown) usePressNanos = 0L;
-        else if (usePressNanos == 0L) usePressNanos = now;
-        if (!attackDown) attackPressNanos = 0L;
-        else if (attackPressNanos == 0L) attackPressNanos = now;
-        if (currentScreen != null || player == null || world == null || interactionManager == null) return;
-        if (useDown && now - usePressNanos <= 300000000L) doFastPlace();
-        if (attackDown && now - attackPressNanos <= 300000000L) doFastBreak();
+
+        if (currentScreen != null || player == null || world == null || interactionManager == null) {
+            useWasDown = useDown;
+            attackWasDown = attackDown;
+            return;
+        }
+
+        if (useDown && !useWasDown) {
+            doFastPlace();
+        }
+
+        if (attackDown && !attackWasDown) {
+            doFastBreak();
+        }
+
+        useWasDown = useDown;
+        attackWasDown = attackDown;
     }
 }
