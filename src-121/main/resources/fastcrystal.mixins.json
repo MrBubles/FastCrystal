@@ -1,0 +1,19 @@
+{
+  "required": true,
+  "package": "me.mrbubbles.fastcrystal.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "mixins": [
+    "EndCrystalItemMixin",
+    "ItemStackMixin",
+    "PlayerInventoryInterface"
+  ],
+  "client": [
+    "ClientConnectionMixin",
+    "ClientPlayerInteractionManagerInterface",
+    "ClientWorldMixin",
+    "MinecraftClientMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

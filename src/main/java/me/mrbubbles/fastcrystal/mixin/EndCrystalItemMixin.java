@@ -1,9 +1,9 @@
 package me.mrbubbles.fastcrystal.mixin;
 
 import me.mrbubbles.fastcrystal.FastCrystal;
-import net.minecraft.item.EndCrystalItem;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.ItemUsageContext;
+import net.minecraft.world.item.EndCrystalItem;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.context.UseOnContext;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
@@ -11,8 +11,8 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 @Mixin(EndCrystalItem.class)
 public class EndCrystalItemMixin {
 
-    @Redirect(method = "useOnBlock", at = @At(value = "INVOKE", target = "Lnet/minecraft/item/ItemStack;decrement(I)V"))
-    private void useOnBlock(ItemStack stack, int amount, ItemUsageContext context) {
-        if (FastCrystal.isEnabled() && !context.getWorld().isClient()) stack.decrement(amount);
+    @Redirect(method = "useOn", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/item/ItemStack;shrink(I)V"))
+    private void onShrinkItem(ItemStack stack, int amount, UseOnContext context) {
+        if (FastCrystal.isEnabled() && !context.getLevel().isClientSide()) stack.shrink(amount);
     }
 }

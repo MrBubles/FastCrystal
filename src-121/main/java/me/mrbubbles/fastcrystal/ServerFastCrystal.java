@@ -9,10 +9,10 @@ public class ServerFastCrystal implements DedicatedServerModInitializer {
 
     @Override
     public void onInitializeServer() {
-        PayloadTypeRegistry.clientboundPlay().register(DisableFastCrystalPayload.ID, DisableFastCrystalPayload.CODEC);
-        ServerPlayConnectionEvents.JOIN.register((handler, _, server) -> {
+        PayloadTypeRegistry.playS2C().register(DisableFastCrystalPayload.ID, DisableFastCrystalPayload.CODEC);
+        ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
             if (server.isSingleplayer()) return;
-            ServerPlayNetworking.send(handler.getPlayer(), DisableFastCrystalPayload.INSTANCE);
+            ServerPlayNetworking.send(handler.player, DisableFastCrystalPayload.INSTANCE);
         });
     }
 }

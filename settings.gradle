@@ -4,7 +4,28 @@ pluginManagement {
             name = 'Fabric'
             url = 'https://maven.fabricmc.net/'
         }
+        maven {
+            name = 'KikuGie Releases'
+            url = 'https://maven.kikugie.dev/releases'
+        }
+        maven {
+            name = 'KikuGie Snapshots'
+            url = 'https://maven.kikugie.dev/snapshots'
+        }
         mavenCentral()
         gradlePluginPortal()
+    }
+}
+
+plugins {
+    id 'dev.kikugie.stonecutter' version '0.9.8'
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '1.0.0'
+}
+
+stonecutter.create(rootProject) {
+    versions '1.21', '26.1', '26.3'
+    vcsVersion = '26.3'
+    mapBuilds { branch, node ->
+        node.project == '1.21' ? 'build-121.gradle' : 'build.gradle'
     }
 }

@@ -1,0 +1,18 @@
+plugins {
+    id 'dev.kikugie.stonecutter'
+}
+
+stonecutter.active '26.3'
+
+tasks.register('buildAndMove', Copy) {
+    group = 'build'
+    description = 'Builds all Minecraft versions and collects the main jars into build/libs/<mod version>.'
+    dependsOn stonecutter.tasks.named('build') { true }
+    from('versions') {
+        include '*/build/libs/*.jar'
+        exclude '**/*-sources.jar'
+    }
+    eachFile { it.path = it.name }
+    includeEmptyDirs = false
+    into layout.buildDirectory.dir("libs/${project.property('mod_version')}")
+}

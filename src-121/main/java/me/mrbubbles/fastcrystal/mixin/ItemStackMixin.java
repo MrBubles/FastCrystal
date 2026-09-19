@@ -1,7 +1,7 @@
 package me.mrbubbles.fastcrystal.mixin;
 
 import me.mrbubbles.fastcrystal.FastCrystal;
-import net.minecraft.world.item.ItemStack;
+import net.minecraft.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -10,8 +10,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(ItemStack.class)
 public class ItemStackMixin {
 
-    @Inject(method = "getPopTime", at = @At("HEAD"), cancellable = true)
-    private void onGetPopTime(CallbackInfoReturnable<Integer> ci) {
+    @Inject(method = "getBobbingAnimationTime", at = @At("HEAD"), cancellable = true)
+    private void getBobbingAnimationTime(CallbackInfoReturnable<Integer> ci) {
         if (FastCrystal.isEnabled()) ci.setReturnValue(0);
     }
 }

@@ -1,7 +1,8 @@
 plugins {
-    // Shared build script for the 26.x nodes (26.1.2, 26.3).
-    // Uses plain loom with official Mojang mappings (26.1+ is unobfuscated, no remap).
-    id 'net.fabricmc.fabric-loom' version '1.16-SNAPSHOT'
+    // Build script for the 1.21.4 node only (see mapBuilds in settings.gradle).
+    // Uses loom-remap with Yarn mappings. Sources live in src-121/ (frozen 1.21 code),
+    // the shared src/ directory holds the unified 26.x code instead.
+    id 'net.fabricmc.fabric-loom-remap' version '1.15-SNAPSHOT'
     id 'maven-publish'
 }
 
@@ -10,6 +11,13 @@ group = "${maven_group}"
 
 base {
     archivesName = "${archives_base_name}"
+}
+
+sourceSets {
+    main {
+        java.srcDirs = [rootProject.file('src-121/main/java')]
+        resources.srcDirs = [rootProject.file('src-121/main/resources')]
+    }
 }
 
 repositories {
@@ -21,24 +29,21 @@ repositories {
 }
 
 dependencies {
-    // To change the versions see the versions/<minecraft version>/gradle.properties file
+    // To change the versions see the versions/1.21.4/gradle.properties file
     minecraft "com.mojang:minecraft:${minecraft_version}"
-
-    implementation "net.fabricmc:fabric-loader:${loader_version}"
+    mappings "net.fabricmc:yarn:${yarn_mappings}:v2"
+    modImplementation "net.fabricmc:fabric-loader:${loader_version}"
 
     // Fabric API. This is technically optional, but you probably want it anyway.
-    implementation "net.fabricmc.fabric-api:fabric-api:${fabric_api_version}"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${fabric_api_version}"
 }
 
 processResources {
-    def vars = [version: project.version, mc_compat: mc_compat, mixin_compat: mixin_compat]
-    inputs.properties vars
+    def versionProperty = project.version
+    inputs.property 'version', versionProperty
 
     filesMatching('fabric.mod.json') {
-        expand version: vars.version, mc_compat: vars.mc_compat
-    }
-    filesMatching('fastcrystal.mixins.json') {
-        expand mixin_compat: vars.mixin_compat
+        expand version: versionProperty
     }
 }
 
@@ -48,11 +53,11 @@ java {
     // If you remove this line, sources will not be generated.
     withSourcesJar()
 
-    sourceCompatibility = JavaVersion.VERSION_25
-    targetCompatibility = JavaVersion.VERSION_25
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
 
     toolchain {
-        languageVersion = JavaLanguageVersion.of(25)
+        languageVersion = JavaLanguageVersion.of(21)
     }
 }
 
